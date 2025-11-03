@@ -68,6 +68,10 @@ export default function Portfolio() {
 }
 
 function PortfolioListItem({ item, isActive, onSelect }) {
+  const meta = [item.role, item.location, item.timeframe]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
     <li className={`item${isActive ? " active" : ""}`}>
       <button
@@ -76,11 +80,7 @@ function PortfolioListItem({ item, isActive, onSelect }) {
         onClick={() => onSelect(item.id)}
       >
         <span className="item-title">{item.title}</span>
-        {(item.role || item.timeframe) && (
-          <span className="item-meta">
-            {[item.role, item.timeframe].filter(Boolean).join(" · ")}
-          </span>
-        )}
+        {meta && <span className="item-meta">{meta}</span>}
       </button>
       {isActive && <ItemDetails item={item} />}
     </li>
@@ -92,6 +92,7 @@ function ItemDetails({ item }) {
     item.description || "Add a description for this item by editing the data.";
   const hasLinks = Array.isArray(item.links) && item.links.length > 0;
   const hasMedia = Array.isArray(item.media) && item.media.length > 0;
+  const hasHighlights = Array.isArray(item.highlights) && item.highlights.length > 0;
 
   return (
     <div className="item-details">
@@ -99,6 +100,13 @@ function ItemDetails({ item }) {
         <p className="item-role">{item.role}</p>
       )}
       <p className="item-description">{description}</p>
+      {hasHighlights && (
+        <ul className="item-highlights">
+          {item.highlights.map((highlight, index) => (
+            <li key={`${item.id}-highlight-${index}`}>{highlight}</li>
+          ))}
+        </ul>
+      )}
       {hasLinks && (
         <div className="item-links">
           {item.links.map((link) => (
@@ -123,12 +131,12 @@ function ItemDetails({ item }) {
             />
           ))}
         </div>
-      ) : (
+      ) : !hasHighlights ? (
         <p className="item-details-placeholder">
           Add photos, videos, or embeds by inserting entries into this item's
           media array.
         </p>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -316,6 +324,8 @@ body{margin:0;font-family:'Syne', sans-serif;background:rgb(248,248,248);color:#
 .item-details{margin-top:.5rem;padding:.5rem 0;border:0;background:none}
 .item-role{margin:0 0 .25rem;font-weight:600;color:#333}
 .item-description{margin:0 0 .75rem;color:#333;line-height:1.5}
+.item-highlights{margin:-.25rem 0 .75rem;padding-left:1.25rem;color:#333;line-height:1.5}
+.item-highlights li{margin:.35rem 0;font-size:.95rem}
 .item-links{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.75rem}
 .item-link{display:inline-flex;align-items:center;padding:.35rem .75rem;border-radius:999px;border:1px solid #d0d0d0;background:#fff;color:#333;font-size:.85rem;text-decoration:none;transition:border-color .15s ease, color .15s ease}
 .item-link:hover{border-color:#111;color:#111}

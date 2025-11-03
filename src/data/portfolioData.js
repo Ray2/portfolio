@@ -33,9 +33,16 @@ export const portfolioData = {
           id: "jujube-entertainment",
           title: "Jujube Entertainment",
           role: "Operations Manager / Creative Producer",
-          timeframe: "2023–Present",
+          location: "Cambridge, MA",
+          timeframe: "2023 – Present",
           description:
-            "Oversee production pipelines and develop interactive music experiences in partnership with artists and brands.",
+            "Lead operations and creative production for cross-disciplinary artist partnerships and experiential campaigns.",
+          highlights: [
+            "Developed artist branding and identity for Otis Zheng.",
+            "Directed creative production for music videos including Mango Sticky Rice, GOODBOY, and Asian Fever.",
+            "Coordinated directors, labels, TikTok influencers, and contractors to manage cross-functional workflows.",
+            "Oversaw five-figure social media marketing campaigns informed by analytics and outreach to 500+ influencers.",
+          ],
           media: [
             {
               type: "iframe",
@@ -69,22 +76,34 @@ export const portfolioData = {
           ],
         },
         {
-          id: "nyu-admin",
-          title: "NYU",
-          role: "Administration Aide & Website Administrator",
-          timeframe: "2025",
+          id: "nyu-research",
+          title: "New York University",
+          role: "Research Collaborator",
+          location: "New York, NY",
+          timeframe: "2023 – 2024",
           description:
-            "Helped streamline internal operations and maintained departmental web presence and tooling.",
+            "Collaborated on multimodal perception studies and tooling for large-scale audio/video analysis.",
+          highlights: [
+            "Co-authored a peer-reviewed ICASSP 2025 paper on multimodal machine learning for videoconferencing.",
+            "Designed and executed human-subjects experiments with 2,900 participants using Qualtrics and Python pipelines.",
+            "Implemented multimodal ML workflows leveraging VGGish, YAMNet, and Wav2Vec2 for audio/video feature extraction.",
+            "Applied Git-based collaboration, code review practices, and Agile cadences across the research team.",
+          ],
           media: [],
           links: [],
         },
-                {
-          id: "nyu-research",
-          title: "NYU",
-          role: "Research Collaborator",
-          timeframe: "2023–2024",
+        {
+          id: "nyu-admin",
+          title: "New York University",
+          role: "Administration Aide & Website Administrator",
+          location: "Brooklyn, NY",
+          timeframe: "2025",
           description:
-            "Collaborated on multimodal perception studies, building tooling for large scale audio/video analysis.",
+            "Supported departmental operations and maintained digital touchpoints for faculty, staff, and students.",
+          highlights: [
+            "Supported department operations, documentation, and internal communications.",
+            "Maintained and updated websites with HTML/CSS while ensuring accessibility and usability compliance.",
+          ],
           media: [],
           links: [],
         },
@@ -96,9 +115,12 @@ export const portfolioData = {
         {
           id: "eterna",
           title: "ETERNA",
-          role: "et3rna.com",
           description:
-            "Immersive audio experience exploring the future of networked performance.",
+            "React/Web Audio DJ mixing platform exploring networked performance futures.",
+          highlights: [
+            "Built waveform visualization, pitch shifting, looping, beat detection, and synchronized crossfader controls.",
+            "Architected a backend with MongoDB, AWS S3/CloudFront/Amplify, and custom REST APIs.",
+          ],
           media: [],
           links: [
             {
@@ -110,9 +132,12 @@ export const portfolioData = {
         {
           id: "pixelcam",
           title: "PIXELCAM",
-          role: "pixelcam.space",
           description:
-            "A browser-based camera that converts live visuals into playful pixel art.",
+            "Retro-inspired photo web app transforming live webcam feeds into pixel art.",
+          highlights: [
+            "Implemented real-time pixelation filters, palette mapping, and export tooling with p5.js and Canvas.",
+            "Deployed the experience via AWS S3 with global delivery through Cloudflare.",
+          ],
           media: [],
           links: [
             {
@@ -125,7 +150,11 @@ export const portfolioData = {
           id: "arduino-player-piano",
           title: "Arduino Player Piano",
           description:
-            "Custom MIDI-driven player piano prototype built with Arduino and bespoke control software.",
+            "MIDI-driven player piano prototype bridging hardware, firmware, and bespoke sequencing tools.",
+          highlights: [
+            "Programmed Arduino microcontrollers to translate MIDI data into solenoid actuation for piano keys.",
+            "Developed control software to manage velocity curves, playback queuing, and live performance overrides.",
+          ],
           media: [],
           links: [],
         },
