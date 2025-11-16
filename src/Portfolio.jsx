@@ -20,6 +20,21 @@ export default function Portfolio() {
     setActiveItemId(null);
   };
 
+  const handleSectionHover = (sectionTitle) => {
+    setOpenSections((prev) => ({
+      ...prev,
+      [sectionTitle]: true,
+    }));
+  };
+
+  const handleSectionLeave = (sectionTitle) => {
+    setOpenSections((prev) => ({
+      ...prev,
+      [sectionTitle]: false,
+    }));
+    setActiveItemId(null);
+  };
+
   return (
     <div className="container">
       <StyleTag />
@@ -28,25 +43,28 @@ export default function Portfolio() {
         <p className="bio">{data.bio}</p>
       </aside>
       <main className="content">
-        {data.sections.map((section) => (
-          <section
-            key={section.title}
-            className={`section${openSections[section.title] ? " section-open" : ""}`}
-          >
-            <h2 className="section-title">
-              <button
-                type="button"
-                className={`section-toggle${
-                  openSections[section.title] ? " open" : ""
-                }`}
-                aria-expanded={openSections[section.title] || false}
-                onClick={() => handleToggleSection(section)}
-              >
-                <span>{section.title}</span>
-              </button>
-            </h2>
-            {openSections[section.title] && (
-              <ul className="list">
+        {data.sections.map((section) => {
+          const isSectionOpen = !!openSections[section.title];
+          return (
+            <section
+              key={section.title}
+              className={`section${isSectionOpen ? " section-open" : ""}`}
+              onMouseEnter={() => handleSectionHover(section.title)}
+              onMouseLeave={() => handleSectionLeave(section.title)}
+            >
+              <h2 className="section-title">
+                <button
+                  type="button"
+                  className={`section-toggle${
+                    isSectionOpen ? " open" : ""
+                  }`}
+                  aria-expanded={isSectionOpen}
+                  onClick={() => handleToggleSection(section)}
+                >
+                  <span>{section.title}</span>
+                </button>
+              </h2>
+              <ul className="list" aria-hidden={!isSectionOpen}>
                 {section.items.map((item) => {
                   const isActive = item.id === activeItemId;
                   return (
@@ -55,28 +73,33 @@ export default function Portfolio() {
                       item={item}
                       isActive={isActive}
                       onSelect={handleSelect}
+                      isSectionOpen={isSectionOpen}
                     />
                   );
                 })}
               </ul>
-            )}
-          </section>
-        ))}
+            </section>
+          );
+        })}
       </main>
     </div>
   );
 }
 
-function PortfolioListItem({ item, isActive, onSelect }) {
+function PortfolioListItem({ item, isActive, onSelect, isSectionOpen }) {
   const meta = [item.role, item.location, item.timeframe]
     .filter(Boolean)
     .join(" · ");
 
   return (
-    <li className={`item${isActive ? " active" : ""}`}>
+    <li
+      className={`item${isActive ? " active" : ""}`}
+      aria-hidden={!isSectionOpen}
+    >
       <button
         type="button"
         className="item-button"
+        tabIndex={isSectionOpen ? 0 : -1}
         onClick={() => onSelect(item.id)}
       >
         <span className="item-title">{item.title}</span>
@@ -219,6 +242,43 @@ function MediaBlock({ media }) {
     );
   }
 
+  if (media.type === "embed") {
+    const widthAttr = media.width || "100%";
+    const heightAttr = media.height || "360";
+    const normalizedWidthStyle =
+      typeof widthAttr === "number" ? `${widthAttr}px` : widthAttr;
+    const normalizedHeightStyle =
+      typeof media.height === "number"
+        ? `${media.height}px`
+        : typeof media.height === "string"
+        ? /[a-z%]/i.test(media.height)
+          ? media.height
+          : `${media.height}px`
+        : "360px";
+    const heightAttributeValue =
+      typeof heightAttr === "number"
+        ? heightAttr
+        : `${heightAttr}`.replace(/px$/i, "");
+
+    return (
+      <div className="media media-embed">
+        <iframe
+          title={media.title || "Embedded preview"}
+          src={media.src}
+          width={widthAttr}
+          height={heightAttributeValue}
+          style={{
+            width: normalizedWidthStyle,
+            height: normalizedHeightStyle,
+            border: 0,
+          }}
+          allow={media.allow || "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"}
+          loading="lazy"
+        />
+      </div>
+    );
+  }
+
   if (media.type === "tiktok") {
     return <TikTokEmbed media={media} />;
   }
@@ -293,10 +353,11 @@ function StyleTag() {
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&display=swap');
 *{box-sizing:border-box}
 html,body,#root{height:100%}
-body{margin:0;font-family:'Syne', sans-serif;background:rgb(248,248,248);color:#111;font-size:18px;line-height:1.6}
+body{margin:0;font-family:'Syne', sans-serif;background:transparent;color:#111;font-size:18px;line-height:1.6}
+.app-shell{position:relative}
 
 /* Layout */
-.container{display:grid;grid-template-columns:1fr 2fr;min-height:100vh}
+.container{display:grid;grid-template-columns:1fr 2fr;min-height:1000px}
 .sidebar{padding:2rem;border-right:1px solid #e6e6e6;background:none}
 .content{padding:2rem;background:none}
 
@@ -311,7 +372,8 @@ body{margin:0;font-family:'Syne', sans-serif;background:rgb(248,248,248);color:#
 .section-toggle:focus{color:#555}
 .section-toggle:focus{outline:none}
 .section-toggle:focus-visible{outline:2px solid rgba(60,118,255,.45);outline-offset:2px;border-radius:.5rem}
-.list{list-style:none;margin:.25rem 0 0;padding:0}
+.list{list-style:none;margin:0;padding:0;max-height:0;overflow:hidden;opacity:0;transform:translateY(-.4rem);transition:max-height .45s ease, opacity .3s ease, transform .45s ease;pointer-events:none}
+.section.section-open .list{margin:.35rem 0 0;max-height:2000px;opacity:1;transform:translateY(0);pointer-events:auto}
 .item{padding:.25rem 0}
 .item-button{width:100%;padding:0;border:0;margin:0;background:none;text-align:left;font-size:1.05rem;display:flex;flex-direction:column;gap:.25rem;cursor:pointer;transition:color .15s ease;color:#111;font-family:'Syne', sans-serif}
 .item-button:focus{outline:none}
@@ -343,7 +405,7 @@ body{margin:0;font-family:'Syne', sans-serif;background:rgb(248,248,248);color:#
 }
 
 /* Remove dark spots (ensure consistent background) */
-header, footer, html, body, #root { background: rgb(248,248,248) !important; box-shadow: none !important; }
+header, footer, html, body, #root { background: transparent !important; box-shadow: none !important; }
 `}</style>
   );
 }

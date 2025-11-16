@@ -128,6 +128,15 @@ export const portfolioData = {
               url: "https://et3rna.com",
             },
           ],
+          media: [
+            {
+              type: "embed",
+              title: "ETERNA Site Preview",
+              src: "https://et3rna.com",
+              width: "100%",
+              height: 750,
+            },
+          ],
         },
         {
           id: "pixelcam",
@@ -138,7 +147,15 @@ export const portfolioData = {
             "Implemented real-time pixelation filters, palette mapping, and export tooling with p5.js and Canvas.",
             "Deployed the experience via AWS S3 with global delivery through Cloudflare.",
           ],
-          media: [],
+          media: [
+            {
+              type: "embed",
+              title: "PIXELCAM Site Preview",
+              src: "https://pixelcam.space",
+              width: "100%",
+              height: 750,
+            },
+          ],
           links: [
             {
               label: "pixelcam.space",
