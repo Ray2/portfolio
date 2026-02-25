@@ -3,30 +3,6 @@ export const portfolioData = {
   bio: "Creative developer & producer building audio-tech and web experiences.",
   sections: [
     {
-      title: "Education",
-      items: [
-        {
-          id: "nyu-itp",
-          title: "NYU – MPS, Interactive Telecommunications Program",
-          timeframe: "2023–2025",
-          description:
-            "Graduate work exploring interactive systems, sonic interfaces, and collaborative media prototypes.",
-          media: [],
-          links: [],
-        },
-        {
-          id: "berklee-epd",
-          title:
-            "Berklee College of Music – B.M. Electronic Production & Design",
-          timeframe: "2019–2022",
-          description:
-            "Focused on acoustics, electronics, and producing immersive audiovisual experiences.",
-          media: [],
-          links: [],
-        },
-      ],
-    },
-    {
       title: "Work",
       items: [
         {
@@ -104,6 +80,30 @@ export const portfolioData = {
             "Supported department operations, documentation, and internal communications.",
             "Maintained and updated websites with HTML/CSS while ensuring accessibility and usability compliance.",
           ],
+          media: [],
+          links: [],
+        },
+      ],
+    },
+    {
+      title: "Education",
+      items: [
+        {
+          id: "nyu-itp",
+          title: "NYU – MPS, Interactive Telecommunications Program",
+          timeframe: "2023–2025",
+          description:
+            "Graduate work exploring interactive systems, sonic interfaces, and collaborative media prototypes.",
+          media: [],
+          links: [],
+        },
+        {
+          id: "berklee-epd",
+          title:
+            "Berklee College of Music – B.M. Electronic Production & Design",
+          timeframe: "2019–2022",
+          description:
+            "Focused on acoustics, electronics, and producing immersive audiovisual experiences.",
           media: [],
           links: [],
         },
