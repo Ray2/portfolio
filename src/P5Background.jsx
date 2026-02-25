@@ -52,7 +52,7 @@ export default function P5Background() {
         };
 
         p.draw = () => {
-          p.background(255);
+          p.background(233, 245, 255);
 
           p.rotateX(2);
           p.rotateY(p.frameCount * 0.0001);
@@ -69,7 +69,12 @@ export default function P5Background() {
               p.translate(x, yOffset, z);
               p.rotateX(p.frameCount * 0.01);
               p.rotateY(p.frameCount * 0.01);
-              p.fill(180 + n * 75);
+              const shimmer = p.sin(t * 1.3 + x * 0.01 + z * 0.01) * 10;
+              p.fill(
+                152 + n * 60 + shimmer * 0.15,
+                198 + n * 38 + shimmer * 0.1,
+                232 + n * 22 + shimmer * 0.2
+              );
               p.box(boxSize);
               p.pop();
             }

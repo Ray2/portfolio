@@ -113,6 +113,27 @@ export const portfolioData = {
       title: "Projects",
       items: [
         {
+          id: "tmlne",
+          title: "TMLNE",
+          description: "Web project and experience at tmlne.com.",
+          highlights: [],
+          media: [
+            {
+              type: "embed",
+              title: "TMLNE Site Preview",
+              src: "https://tmlne.com",
+              width: "100%",
+              height: 750,
+            },
+          ],
+          links: [
+            {
+              label: "tmlne.com",
+              url: "https://tmlne.com",
+            },
+          ],
+        },
+        {
           id: "eterna",
           title: "ETERNA",
           description:

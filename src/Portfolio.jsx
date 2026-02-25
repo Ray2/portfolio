@@ -1,38 +1,60 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { portfolioData } from "./data/portfolioData";
+import car1Image from "./car1.png";
+import car2Image from "./car2.png";
 
 export default function Portfolio() {
   const data = useMemo(() => portfolioData, []);
   const [activeItemId, setActiveItemId] = useState(null);
-  const [openSections, setOpenSections] = useState(() =>
+  const [manuallyOpenSections, setManuallyOpenSections] = useState(() =>
     Object.fromEntries(data.sections.map((section) => [section.title, false]))
   );
+  const [hoveredSectionTitle, setHoveredSectionTitle] = useState(null);
+  const activeSectionTitle = useMemo(() => {
+    if (!activeItemId) {
+      return null;
+    }
+
+    const matchedSection = data.sections.find((section) =>
+      section.items.some((item) => item.id === activeItemId)
+    );
+
+    return matchedSection ? matchedSection.title : null;
+  }, [activeItemId, data.sections]);
 
   const handleSelect = (itemId) => {
     setActiveItemId((prev) => (prev === itemId ? null : itemId));
   };
 
   const handleToggleSection = (section) => {
-    setOpenSections((prev) => ({
+    const isCurrentlyManualOpen = !!manuallyOpenSections[section.title];
+
+    setManuallyOpenSections((prev) => ({
       ...prev,
       [section.title]: !prev[section.title],
     }));
+
+    if (isCurrentlyManualOpen) {
+      setHoveredSectionTitle((prev) =>
+        prev === section.title ? null : prev
+      );
+    }
+
     setActiveItemId(null);
   };
 
   const handleSectionHover = (sectionTitle) => {
-    setOpenSections((prev) => ({
-      ...prev,
-      [sectionTitle]: true,
-    }));
+    setHoveredSectionTitle(sectionTitle);
   };
 
   const handleSectionLeave = (sectionTitle) => {
-    setOpenSections((prev) => ({
-      ...prev,
-      [sectionTitle]: false,
-    }));
-    setActiveItemId(null);
+    setHoveredSectionTitle((prev) =>
+      prev === sectionTitle ? null : prev
+    );
+    const hasActiveSubsection = activeSectionTitle === sectionTitle;
+    if (!manuallyOpenSections[sectionTitle] && !hasActiveSubsection) {
+      setActiveItemId(null);
+    }
   };
 
   return (
@@ -40,11 +62,18 @@ export default function Portfolio() {
       <StyleTag />
       <aside className="sidebar">
         <h1 className="name">{data.name}</h1>
+        <div className="car-hover-image" aria-label="Car image">
+          <img src={car1Image} alt="Car" className="car-image car-image-primary" />
+          <img src={car2Image} alt="Car on hover" className="car-image car-image-hover" />
+        </div>
         <p className="bio">{data.bio}</p>
       </aside>
       <main className="content">
         {data.sections.map((section) => {
-          const isSectionOpen = !!openSections[section.title];
+          const isSectionOpen =
+            !!manuallyOpenSections[section.title] ||
+            hoveredSectionTitle === section.title ||
+            activeSectionTitle === section.title;
           return (
             <section
               key={section.title}
@@ -363,6 +392,11 @@ body{margin:0;font-family:'Syne', sans-serif;background:transparent;color:#111;f
 
 /* Typography */
 .name{font-size:2rem;margin:0 0 1rem}
+.car-hover-image{position:relative;width:min(100%,340px);margin:0 0 1rem}
+.car-image{display:block;width:100%;height:auto;transition:opacity .2s ease}
+.car-image-hover{position:absolute;inset:0;opacity:0;pointer-events:none}
+.car-hover-image:hover .car-image-primary{opacity:0}
+.car-hover-image:hover .car-image-hover{opacity:1}
 .bio{color:#444;margin:0}
 .section{margin-bottom:.1rem}
 .section.section-open{margin-bottom:.65rem}
