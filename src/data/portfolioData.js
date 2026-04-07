@@ -199,6 +199,431 @@ export const portfolioData = {
       ],
     },
     {
+      title: "Creative Coding",
+      items: [
+        {
+          id: "creative-coding-sketch-1",
+          title: "p5.js Sketch",
+          description:
+            "Embedded p5.js sketch from the p5 web editor.",
+          media: [
+            {
+              type: "embed",
+              title: "p5.js Sketch",
+              src: "https://editor.p5js.org/xRayCx/full/Rcr3sowNS",
+              width: "100%",
+              height: 640,
+            },
+          ],
+          links: [
+            {
+              label: "Open Sketch",
+              url: "https://editor.p5js.org/xRayCx/full/Rcr3sowNS",
+            },
+          ],
+        },
+        {
+          id: "creative-coding-sketch-2",
+          title: "p5.js Sketch 2",
+          description:
+            "Embedded p5.js sketch from the p5 web editor.",
+          media: [
+            {
+              type: "embed",
+              title: "p5.js Sketch 2",
+              src: "https://editor.p5js.org/xRayCx/full/z93ocOSyX",
+              width: "100%",
+              height: 640,
+            },
+          ],
+          links: [
+            {
+              label: "Open Sketch",
+              url: "https://editor.p5js.org/xRayCx/full/z93ocOSyX",
+            },
+          ],
+        },
+        {
+          id: "creative-coding-sketch-3",
+          title: "p5.js Sketch 3",
+          description:
+            "Embedded p5.js sketch from the p5 web editor.",
+          media: [
+            {
+              type: "embed",
+              title: "p5.js Sketch 3",
+              src: "https://editor.p5js.org/xRayCx/full/KnF9Zi0j-",
+              width: "100%",
+              height: 640,
+            },
+          ],
+          links: [
+            {
+              label: "Open Sketch",
+              url: "https://editor.p5js.org/xRayCx/full/KnF9Zi0j-",
+            },
+          ],
+        },
+        {
+          id: "creative-coding-sketch-4",
+          title: "p5.js Sketch 4",
+          description:
+            "Embedded p5.js sketch from the p5 web editor.",
+          media: [
+            {
+              type: "embed",
+              title: "p5.js Sketch 4",
+              src: "https://editor.p5js.org/xRayCx/full/sE4PXbj_0",
+              width: "100%",
+              height: 640,
+            },
+          ],
+          links: [
+            {
+              label: "Open Sketch",
+              url: "https://editor.p5js.org/xRayCx/full/sE4PXbj_0",
+            },
+          ],
+        },
+        {
+          id: "creative-coding-sketch-5",
+          title: "p5.js Sketch 5",
+          description:
+            "Embedded p5.js sketch from the p5 web editor.",
+          media: [
+            {
+              type: "embed",
+              title: "p5.js Sketch 5",
+              src: "https://editor.p5js.org/xRayCx/full/K-rY9ellK",
+              width: "100%",
+              height: 640,
+            },
+          ],
+          links: [
+            {
+              label: "Open Sketch",
+              url: "https://editor.p5js.org/xRayCx/full/K-rY9ellK",
+            },
+          ],
+        },
+        {
+          id: "creative-coding-sketch-6",
+          title: "p5.js Sketch 6",
+          description:
+            "Embedded p5.js sketch from the p5 web editor.",
+          media: [
+            {
+              type: "embed",
+              title: "p5.js Sketch 6",
+              src: "https://editor.p5js.org/xRayCx/full/rAILV4v3B",
+              width: "100%",
+              height: 640,
+            },
+          ],
+          links: [
+            {
+              label: "Open Sketch",
+              url: "https://editor.p5js.org/xRayCx/full/rAILV4v3B",
+            },
+          ],
+        },
+        {
+          id: "creative-coding-sketch-7",
+          title: "p5.js Sketch 7",
+          description:
+            "Embedded p5.js sketch from the p5 web editor.",
+          media: [
+            {
+              type: "embed",
+              title: "p5.js Sketch 7",
+              src: "https://editor.p5js.org/xRayCx/full/NnYSDQRG1",
+              width: "100%",
+              height: 640,
+            },
+          ],
+          links: [
+            {
+              label: "Open Sketch",
+              url: "https://editor.p5js.org/xRayCx/full/NnYSDQRG1",
+            },
+          ],
+        },
+        {
+          id: "creative-coding-sketch-8",
+          title: "p5.js Sketch 8",
+          description:
+            "Embedded p5.js sketch from the p5 web editor.",
+          media: [
+            {
+              type: "embed",
+              title: "p5.js Sketch 8",
+              src: "https://editor.p5js.org/xRayCx/full/U8EFtHFoS",
+              width: "100%",
+              height: 640,
+            },
+          ],
+          links: [
+            {
+              label: "Open Sketch",
+              url: "https://editor.p5js.org/xRayCx/full/U8EFtHFoS",
+            },
+          ],
+        },
+        {
+          id: "creative-coding-sketch-9",
+          title: "p5.js Sketch 9",
+          description:
+            "Embedded p5.js sketch from the p5 web editor.",
+          media: [
+            {
+              type: "embed",
+              title: "p5.js Sketch 9",
+              src: "https://editor.p5js.org/xRayCx/full/J8EKMjBZa",
+              width: "100%",
+              height: 640,
+            },
+          ],
+          links: [
+            {
+              label: "Open Sketch",
+              url: "https://editor.p5js.org/xRayCx/full/J8EKMjBZa",
+            },
+          ],
+        },
+        {
+          id: "creative-coding-sketch-10",
+          title: "p5.js Sketch 10",
+          description:
+            "Embedded p5.js sketch from the p5 web editor.",
+          media: [
+            {
+              type: "embed",
+              title: "p5.js Sketch 10",
+              src: "https://editor.p5js.org/xRayCx/full/z6vNUvskc",
+              width: "100%",
+              height: 640,
+            },
+          ],
+          links: [
+            {
+              label: "Open Sketch",
+              url: "https://editor.p5js.org/xRayCx/full/z6vNUvskc",
+            },
+          ],
+        },
+        {
+          id: "creative-coding-sketch-11",
+          title: "p5.js Sketch 11",
+          description:
+            "Embedded p5.js sketch from the p5 web editor.",
+          media: [
+            {
+              type: "embed",
+              title: "p5.js Sketch 11",
+              src: "https://editor.p5js.org/xRayCx/full/8rbq4-FLa",
+              width: "100%",
+              height: 640,
+            },
+          ],
+          links: [
+            {
+              label: "Open Sketch",
+              url: "https://editor.p5js.org/xRayCx/full/8rbq4-FLa",
+            },
+          ],
+        },
+        {
+          id: "creative-coding-sketch-12",
+          title: "p5.js Sketch 12",
+          description:
+            "Embedded p5.js sketch from the p5 web editor.",
+          media: [
+            {
+              type: "embed",
+              title: "p5.js Sketch 12",
+              src: "https://editor.p5js.org/xRayCx/full/EiA_1K0_E",
+              width: "100%",
+              height: 640,
+            },
+          ],
+          links: [
+            {
+              label: "Open Sketch",
+              url: "https://editor.p5js.org/xRayCx/full/EiA_1K0_E",
+            },
+          ],
+        },
+        {
+          id: "creative-coding-sketch-13",
+          title: "p5.js Sketch 13",
+          description:
+            "Embedded p5.js sketch from the p5 web editor.",
+          media: [
+            {
+              type: "embed",
+              title: "p5.js Sketch 13",
+              src: "https://editor.p5js.org/xRayCx/full/1AbzDPZYi",
+              width: "100%",
+              height: 640,
+            },
+          ],
+          links: [
+            {
+              label: "Open Sketch",
+              url: "https://editor.p5js.org/xRayCx/full/1AbzDPZYi",
+            },
+          ],
+        },
+        {
+          id: "creative-coding-sketch-14",
+          title: "p5.js Sketch 14",
+          description:
+            "Embedded p5.js sketch from the p5 web editor.",
+          media: [
+            {
+              type: "embed",
+              title: "p5.js Sketch 14",
+              src: "https://editor.p5js.org/xRayCx/full/5Z2cG9J39",
+              width: "100%",
+              height: 640,
+            },
+          ],
+          links: [
+            {
+              label: "Open Sketch",
+              url: "https://editor.p5js.org/xRayCx/full/5Z2cG9J39",
+            },
+          ],
+        },
+        {
+          id: "creative-coding-sketch-15",
+          title: "p5.js Sketch 15",
+          description:
+            "Embedded p5.js sketch from the p5 web editor.",
+          media: [
+            {
+              type: "embed",
+              title: "p5.js Sketch 15",
+              src: "https://editor.p5js.org/xRayCx/full/TubG4f8va",
+              width: "100%",
+              height: 640,
+            },
+          ],
+          links: [
+            {
+              label: "Open Sketch",
+              url: "https://editor.p5js.org/xRayCx/full/TubG4f8va",
+            },
+          ],
+        },
+        {
+          id: "creative-coding-sketch-16",
+          title: "p5.js Sketch 16",
+          description:
+            "Embedded p5.js sketch from the p5 web editor.",
+          media: [
+            {
+              type: "embed",
+              title: "p5.js Sketch 16",
+              src: "https://editor.p5js.org/xRayCx/full/_cAzUVpbR",
+              width: "100%",
+              height: 640,
+            },
+          ],
+          links: [
+            {
+              label: "Open Sketch",
+              url: "https://editor.p5js.org/xRayCx/full/_cAzUVpbR",
+            },
+          ],
+        },
+        {
+          id: "creative-coding-sketch-17",
+          title: "p5.js Sketch 17",
+          description:
+            "Embedded p5.js sketch from the p5 web editor.",
+          media: [
+            {
+              type: "embed",
+              title: "p5.js Sketch 17",
+              src: "https://editor.p5js.org/xRayCx/full/Eq8Fd8wZQ",
+              width: "100%",
+              height: 640,
+            },
+          ],
+          links: [
+            {
+              label: "Open Sketch",
+              url: "https://editor.p5js.org/xRayCx/full/Eq8Fd8wZQ",
+            },
+          ],
+        },
+        {
+          id: "creative-coding-sketch-18",
+          title: "p5.js Sketch 18",
+          description:
+            "Embedded p5.js sketch from the p5 web editor.",
+          media: [
+            {
+              type: "embed",
+              title: "p5.js Sketch 18",
+              src: "https://editor.p5js.org/xRayCx/full/pgL3GwxBX",
+              width: "100%",
+              height: 640,
+            },
+          ],
+          links: [
+            {
+              label: "Open Sketch",
+              url: "https://editor.p5js.org/xRayCx/full/pgL3GwxBX",
+            },
+          ],
+        },
+        {
+          id: "creative-coding-sketch-19",
+          title: "p5.js Sketch 19",
+          description:
+            "Embedded p5.js sketch from the p5 web editor.",
+          media: [
+            {
+              type: "embed",
+              title: "p5.js Sketch 19",
+              src: "https://editor.p5js.org/xRayCx/full/jgGywPzFV",
+              width: "100%",
+              height: 640,
+            },
+          ],
+          links: [
+            {
+              label: "Open Sketch",
+              url: "https://editor.p5js.org/xRayCx/full/jgGywPzFV",
+            },
+          ],
+        },
+        {
+          id: "creative-coding-sketch-20",
+          title: "p5.js Sketch 20",
+          description:
+            "Embedded p5.js sketch from the p5 web editor.",
+          media: [
+            {
+              type: "embed",
+              title: "p5.js Sketch 20",
+              src: "https://editor.p5js.org/xRayCx/full/TJUiKO2rB",
+              width: "100%",
+              height: 640,
+            },
+          ],
+          links: [
+            {
+              label: "Open Sketch",
+              url: "https://editor.p5js.org/xRayCx/full/TJUiKO2rB",
+            },
+          ],
+        },
+      ],
+    },
+    {
       title: "Research",
       items: [
         {
