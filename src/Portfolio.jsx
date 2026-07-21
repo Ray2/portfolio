@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { portfolioData } from "./data/portfolioData";
 import car1Image from "./car1.png";
 import car2Image from "./car2.png";
@@ -10,6 +10,7 @@ export default function Portfolio() {
     Object.fromEntries(data.sections.map((section) => [section.title, false]))
   );
   const [hoveredSectionTitle, setHoveredSectionTitle] = useState(null);
+  const pendingScrollPosition = useRef(null);
   const activeSectionTitle = useMemo(() => {
     if (!activeItemId) {
       return null;
@@ -27,6 +28,7 @@ export default function Portfolio() {
   };
 
   const handleToggleSection = (section) => {
+    pendingScrollPosition.current = window.scrollY;
     const isCurrentlyManualOpen = !!manuallyOpenSections[section.title];
 
     setManuallyOpenSections((prev) => ({
@@ -42,6 +44,15 @@ export default function Portfolio() {
 
     setActiveItemId(null);
   };
+
+  useLayoutEffect(() => {
+    if (pendingScrollPosition.current === null) {
+      return;
+    }
+
+    window.scrollTo({ top: pendingScrollPosition.current, left: 0 });
+    pendingScrollPosition.current = null;
+  }, [manuallyOpenSections, activeItemId]);
 
   const handleSectionHover = (sectionTitle) => {
     setHoveredSectionTitle(sectionTitle);
@@ -388,7 +399,7 @@ body{margin:0;font-family:'Syne', sans-serif;background:transparent;color:#111;f
 /* Layout */
 .container{display:grid;grid-template-columns:1fr 2fr;min-height:1000px}
 .sidebar{padding:2rem;border-right:1px solid #e6e6e6;background:none}
-.content{padding:2rem;background:none}
+.content{padding:2rem;background:none;overflow-anchor:none}
 
 /* Typography */
 .name{font-size:2rem;margin:0 0 1rem}
