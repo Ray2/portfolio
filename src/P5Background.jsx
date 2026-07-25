@@ -40,6 +40,8 @@ export default function P5Background() {
         p.setup = () => {
           const width = window.innerWidth || CANVAS_WIDTH;
           const height = window.innerHeight || CANVAS_HEIGHT;
+          p.pixelDensity(1);
+          p.frameRate(30);
           renderer = p.createCanvas(width, height, p.WEBGL);
           renderer.parent(containerRef.current);
           p.noStroke();
