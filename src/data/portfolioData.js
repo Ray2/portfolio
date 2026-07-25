@@ -7,7 +7,10 @@ import pwpOutro from "../pwp-outro.mp3";
 
 export const portfolioData = {
   name: "Ray Cogliano",
-  bio: "Creative developer & producer building audio-tech and web experiences, based in New York City.",
+  bio: "Creative developer & producer building audio-tech and web experiences, based in New York City",
+  coordinates: "40.74344197625022, -73.98818390071976",
+  coordinatesUrl:
+    "https://www.google.com/maps?q=40.74344197625022,-73.98818390071976",
   sections: [
     {
       title: "Work",

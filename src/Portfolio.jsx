@@ -84,7 +84,15 @@ export default function Portfolio() {
     <div className="container">
       <StyleTag />
       <aside className="sidebar">
-        <h1 className="name">{data.name}</h1>
+        <h1 className="name">
+          <span>{data.name}</span>
+          <span
+            className="online-status"
+            role="img"
+            aria-label="Online"
+            title="Online"
+          />
+        </h1>
         <div className="profile-image">
           <img
             src={headshotImage}
@@ -96,7 +104,18 @@ export default function Portfolio() {
             fetchPriority="high"
           />
         </div>
-        <p className="bio">{data.bio}</p>
+        <p className="bio">
+          {data.bio}.
+          <br />
+          <a
+            className="bio-coordinates"
+            href={data.coordinatesUrl}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <strong>{data.coordinates}</strong>
+          </a>
+        </p>
         <div className="sidebar-contact">
           <h2>Contact</h2>
           <a href="mailto:ray@inanimate.space">
@@ -262,20 +281,27 @@ function IMDbIcon() {
       aria-hidden="true"
     >
       <rect
-        x="2"
-        y="5"
-        width="20"
-        height="14"
-        rx="2"
+        x="1.5"
+        y="5.5"
+        width="21"
+        height="13"
+        rx="2.2"
         fill="none"
         stroke="currentColor"
-        strokeWidth="1.8"
+        strokeWidth="1.7"
       />
-      <path
-        d="M4.4 8.2h1.8v7.6H4.4V8.2Zm2.8 0h2.5l.45 3.55.44-3.55h2.5v7.6h-1.55v-5.03l-.7 5.03H9.46l-.7-5.03v5.03H7.2V8.2Zm6.9 0h2.72c1.73 0 2.28.54 2.28 2.24v3.12c0 1.7-.55 2.24-2.28 2.24H14.1V8.2Zm1.78 1.3v5h.56c.68 0 .86-.2.86-.94v-3.12c0-.74-.18-.94-.86-.94h-.56Zm4.05-1.3h1.67v2.4c.3-.4.7-.6 1.13-.6.78 0 1.27.58 1.27 1.55v2.9c0 .98-.49 1.55-1.27 1.55-.48 0-.9-.23-1.2-.7v.5h-1.6V8.2Zm1.67 3.4v2.8c0 .32.12.48.37.48.24 0 .36-.16.36-.48v-2.8c0-.32-.12-.48-.36-.48-.25 0-.37.16-.37.48Z"
+      <text
+        x="12"
+        y="14.7"
+        textAnchor="middle"
         fill="currentColor"
-        transform="scale(.85) translate(1.7 1.05)"
-      />
+        fontFamily="Arial Black, Arial, sans-serif"
+        fontSize="7.2"
+        fontWeight="900"
+        letterSpacing="-.45"
+      >
+        IMDb
+      </text>
     </svg>
   );
 }
@@ -287,10 +313,13 @@ function SoundCloudIcon() {
       viewBox="0 0 24 24"
       aria-hidden="true"
     >
-      <path
-        fill="currentColor"
-        d="M1.4 13.1c-.2 0-.3.2-.4.5L.6 16l.4 2.3c.1.3.2.5.4.5s.4-.2.4-.5l.5-2.3-.5-2.4c0-.3-.2-.5-.4-.5Zm1.7-1.3c-.3 0-.4.2-.5.6L2 16l.6 3.5c.1.3.2.5.5.5s.4-.2.5-.5l.6-3.5-.6-3.6c-.1-.4-.2-.6-.5-.6Zm1.9-1c-.3 0-.5.3-.5.7L4 16l.5 4.4c.1.4.2.7.5.7s.5-.3.6-.7l.5-4.4-.5-4.5c-.1-.4-.3-.7-.6-.7Zm2-3.1c-.4 0-.6.3-.7.8L5.8 16l.5 4.9c.1.5.3.8.7.8s.6-.3.7-.8l.6-4.9-.6-7.5c-.1-.5-.3-.8-.7-.8Zm2.1-1c-.4 0-.7.3-.7.9L7.9 16l.5 4.9c.1.5.3.9.7.9s.7-.4.7-.9l.6-4.9-.6-8.4c0-.6-.3-.9-.7-.9Zm7.4 5.1a4.7 4.7 0 0 0-1.8.4 5.7 5.7 0 0 0-5.6-4.7h-.3v13.4h7.7a4.6 4.6 0 1 0 0-9.1Z"
-      />
+      <g fill="currentColor">
+        <rect x="1.5" y="11.5" width="1.25" height="5" rx=".625" />
+        <rect x="3.7" y="9.5" width="1.25" height="7" rx=".625" />
+        <rect x="5.9" y="7.5" width="1.25" height="9" rx=".625" />
+        <rect x="8.1" y="8.7" width="1.25" height="7.8" rx=".625" />
+        <path d="M10.3 16.5V8.2a5.5 5.5 0 0 1 8.8 3.7h.35a2.3 2.3 0 1 1 0 4.6H10.3Z" />
+      </g>
     </svg>
   );
 }
@@ -1040,10 +1069,13 @@ a,button,[role="button"],summary{cursor:url("${xpPointer}") 5 1,pointer}
 .content{min-width:0;padding:2rem;background:none;overflow-anchor:none}
 
 /* Typography */
-.name{font-size:2rem;margin:0 0 1rem}
+.name{display:flex;align-items:center;gap:.55rem;font-size:2rem;margin:0 0 1rem}
+.online-status{display:inline-block;width:11px;height:11px;flex:0 0 auto;border:2px solid rgba(255,255,255,.9);border-radius:50%;background:#31a24c}
 .profile-image{width:min(100%,340px);margin:0 0 1rem}
 .headshot-image{display:block;width:100%;height:auto}
 .bio{color:#444;margin:0}
+.bio-coordinates{display:inline-block;color:inherit;font-size:.72rem;white-space:nowrap;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px}
+.bio-coordinates:hover{color:#111}
 .sidebar-contact{display:flex;flex-direction:column;align-items:flex-start;gap:.25rem;margin-top:1.5rem}
 .sidebar-contact h2{margin:0 0 .25rem;font-size:1rem}
 .sidebar-contact a{display:inline-flex;align-items:center;gap:.45rem;color:#333;font-size:.9rem;text-decoration:none}
@@ -1175,6 +1207,7 @@ a,button,[role="button"],summary{cursor:url("${xpPointer}") 5 1,pointer}
 .theme-dark .course-group-content ul,
 .theme-dark .media-caption{color:#c7ced8}
 .theme-dark .sidebar-contact a:hover,
+.theme-dark .bio-coordinates:hover,
 .theme-dark .sketch-title:hover,
 .theme-dark .section-toggle:hover,
 .theme-dark .section-toggle:focus,
@@ -1206,7 +1239,6 @@ a,button,[role="button"],summary{cursor:url("${xpPointer}") 5 1,pointer}
   .coverflow-track{padding-top:34px;padding-bottom:16px}
   .coverflow-arrow{width:34px;height:46px}
 }
-
 /* Remove dark spots (ensure consistent background) */
 header, footer, html, body, #root { background: transparent !important; box-shadow: none !important; }
 `}</style>
