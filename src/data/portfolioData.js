@@ -1,4 +1,9 @@
 import peopleWatchingPeopleImage from "../PWP.webp";
+import amoebaCover from "../amoeba-cover.jpg";
+import ifIForgetCover from "../if-i-forget-cover.jpg";
+import acesCover from "../aces-cover.jpg";
+import pwpIntro from "../pwp-intro.mp3";
+import pwpOutro from "../pwp-outro.mp3";
 
 export const portfolioData = {
   name: "Ray Cogliano",
@@ -8,10 +13,28 @@ export const portfolioData = {
       title: "Work",
       items: [
         {
+          id: "mercor-ai-model-trainer",
+          title: "Mercor",
+          logoStyle: "mercor",
+          role: "AI Model Trainer (Music)",
+          location: "Remote",
+          timeframe: "2026 – Present",
+          description:
+            "Develop and evaluate expert music and audio tasks used to train and assess large language models.",
+          highlights: [
+            "Authored and reviewed music theory and technical audio evaluation tasks for AI model training and evaluation.",
+            "Evaluated AI-generated responses for accuracy in music theory, harmonic analysis, and spectrogram interpretation.",
+            "Wrote structured reference answers and annotations to improve large-language-model training data quality.",
+          ],
+          media: [],
+          links: [],
+        },
+        {
           id: "jujube-entertainment",
           title: "Jujube Entertainment",
+          logoStyle: "jujube",
           role: "Operations Manager / Creative Producer",
-          location: "Cambridge, MA",
+          location: "Cambridge, MA (Remote)",
           timeframe: "2023 – Present",
           description:
             "Lead operations and creative production for cross-disciplinary artist partnerships and experiential campaigns.",
@@ -56,6 +79,7 @@ export const portfolioData = {
         {
           id: "nyu-research",
           title: "New York University",
+          logoStyle: "nyu",
           role: "Research Collaborator",
           location: "New York, NY",
           timeframe: "2023 – 2024",
@@ -73,6 +97,7 @@ export const portfolioData = {
         {
           id: "nyu-admin",
           title: "New York University",
+          logoStyle: "nyu",
           role: "Administration Aide & Website Administrator",
           location: "Brooklyn, NY",
           timeframe: "2025",
@@ -109,7 +134,9 @@ export const portfolioData = {
       items: [
         {
           id: "nyu-itp",
-          title: "NYU – MPS, Interactive Telecommunications Program",
+          title: "New York University",
+          subtitle: "MPS, Interactive Telecommunications Program",
+          logoStyle: "nyu",
           timeframe: "2023–2025",
           courseSection: "NYU Courses",
           description:
@@ -119,8 +146,9 @@ export const portfolioData = {
         },
         {
           id: "berklee-epd",
-          title:
-            "Berklee College of Music – B.M. Electronic Production & Design",
+          title: "Berklee College of Music",
+          subtitle: "B.M. Electronic Production & Design",
+          logoStyle: "berklee",
           timeframe: "2019–2022",
           courseSection: "Berklee Courses",
           description:
@@ -393,11 +421,13 @@ export const portfolioData = {
           id: "tmlne",
           title: "TMLNE",
           logoStyle: "tmlne",
+          timeframe: "2026",
           description:
-            "React and Firebase timeline editor for building and sharing detailed, multi-row timelines.",
+            "Shareable timeline-building application developed with React and Firebase for arranging complex events across multiple synchronized rows.",
           highlights: [
-            "Built draggable and resizable timeline segments with zoomable time ranges.",
-            "Implemented interval playback, multi-row editing, and timeline export.",
+            "Designed draggable and resizable segments for precise visual timeline editing.",
+            "Built zoomable time ranges and synchronized multi-row organization.",
+            "Implemented interval playback, sharing, and timeline export.",
           ],
           media: [
             {
@@ -419,11 +449,13 @@ export const portfolioData = {
           id: "eterna",
           title: "ETERNA",
           logoStyle: "eterna",
+          timeframe: "2025",
           description:
-            "React and Web Audio DJ mixing application for browser-based performance and synchronized audio control.",
+            "Browser-based DJ mixing application developed with React and the Web Audio API for real-time performance and synchronized audio control.",
           highlights: [
-            "Built waveform visualization, pitch shifting, looping, crossfader mixing, beat detection, and synchronized audio controls.",
-            "Developed a backend using MongoDB, AWS S3, CloudFront, Amplify, and custom REST APIs.",
+            "Built interactive waveform visualization, pitch shifting, looping, and beat detection.",
+            "Implemented crossfader mixing and synchronized playback controls.",
+            "Developed custom REST APIs and a MongoDB backend supported by AWS S3, CloudFront, and Amplify.",
           ],
           links: [
             {
@@ -445,11 +477,13 @@ export const portfolioData = {
           id: "pixelcam",
           title: "PIXELCAM",
           logoStyle: "pixelcam",
+          timeframe: "2024",
           description:
-            "Retro-inspired camera and social web application built with Expo, React Native Web, Firebase, and Cloudflare Workers and R2.",
+            "Retro-inspired camera and social platform developed with Expo, React Native Web, Firebase, and Cloudflare Workers and R2.",
           highlights: [
-            "Implemented real-time pixel effects, custom palette tools, uploads, and user profiles.",
-            "Added RTMP live-stream support and Stripe-powered premium features.",
+            "Created real-time pixel effects and custom color-palette tools.",
+            "Built media uploads, user profiles, and social web-app functionality.",
+            "Integrated RTMP live-stream support and Stripe-powered premium features.",
           ],
           media: [
             {
@@ -470,6 +504,7 @@ export const portfolioData = {
         {
           id: "rc-707-drum-machine",
           title: "Rhythm Cartridge 707 (RC-707) Drum Machine",
+          timeframe: "2023–2024",
           description:
             "Compact cartridge-based drum machine with four hot-swappable sound generators and an eight-step, four-track sequencer.",
           highlights: [
@@ -498,6 +533,7 @@ export const portfolioData = {
         {
           id: "arduino-player-piano",
           title: "Arduino Powered Player Piano",
+          timeframe: "2022–2023",
           description:
             "MIDI-driven player piano prototype bridging hardware, firmware, and bespoke sequencing tools.",
           highlights: [
@@ -507,6 +543,13 @@ export const portfolioData = {
           media: [
             {
               type: "embed",
+              title: "Arduino Powered Player Piano Demo",
+              src: "https://www.youtube.com/embed/5REfPB5XNJc",
+              width: "100%",
+              height: 450,
+            },
+            {
+              type: "embed",
               title: "Arduino Powered Player Piano – Project Presentation",
               src: "/arduino-powered-player-piano.pdf",
               width: "100%",
@@ -514,6 +557,10 @@ export const portfolioData = {
             },
           ],
           links: [
+            {
+              label: "Watch Demo",
+              url: "https://youtu.be/5REfPB5XNJc",
+            },
             {
               label: "Open Project Presentation",
               url: "/arduino-powered-player-piano.pdf",
@@ -954,6 +1001,8 @@ export const portfolioData = {
           id: "icassp-paper",
           title:
             "Multimodal Machine Learning Can Predict Videoconference Fluidity and Enjoyment",
+          logoStyle: "nyu",
+          timeframe: "2025",
           description:
             "Co-authored through the NYU Psychology Lab, this ICASSP 2025 study used audio embeddings, facial actions, and body-motion features from thousands of RoomReader videoconference clips to predict low conversational fluidity and enjoyment. The best multimodal models reached an ROC-AUC of 0.87, with audio features proving most predictive.",
           media: [],
@@ -972,6 +1021,7 @@ export const portfolioData = {
         {
           id: "soundcloud-amoeba",
           title: "AMOEBA [raw]「2020-2021」⟨sliced⟩",
+          cover: amoebaCover,
           description:
             "Playlist of experimental electronic sketches produced throughout the AMOEBA sessions.",
           media: [
@@ -995,6 +1045,7 @@ export const portfolioData = {
         {
           id: "soundcloud-singles",
           title: "Singles",
+          coverStyle: "singles",
           description:
             "Select single releases featuring collaborations and personal cuts.",
           media: [
@@ -1018,6 +1069,7 @@ export const portfolioData = {
         {
           id: "soundcloud-prod",
           title: "Prod.",
+          coverStyle: "prod",
           description:
             "Selected production work spanning collaborations and personal releases.",
           media: [
@@ -1039,8 +1091,60 @@ export const portfolioData = {
           ],
         },
         {
+          id: "spotify-aces",
+          title: "Aces",
+          role: "Production, Recording, Mixing & Mastering",
+          cover: acesCover,
+          description:
+            "Production, recording, mixing, and mastering for Insight's 2018 six-track EP, Aces.",
+          media: [
+            {
+              type: "embed",
+              title: "Spotify – Aces by Insight",
+              src: "https://open.spotify.com/embed/album/6R1kRvuTTQxbzHPb10Rfae?utm_source=generator",
+              width: "100%",
+              height: 352,
+              allow:
+                "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture",
+            },
+          ],
+          links: [
+            {
+              label: "Open on Spotify",
+              url: "https://open.spotify.com/album/6R1kRvuTTQxbzHPb10Rfae",
+            },
+          ],
+        },
+        {
+          id: "spotify-if-i-forget",
+          title: "If I Forget, It's Only Because I Forgot",
+          role: "Additional Mixing",
+          cover: ifIForgetCover,
+          description:
+            "Additional mixing for Celsius's 2020 five-track EP, If I Forget, It's Only Because I Forgot.",
+          media: [
+            {
+              type: "embed",
+              title:
+                "Spotify – If I Forget, It's Only Because I Forgot by Celsius",
+              src: "https://open.spotify.com/embed/album/1wYXIOQcsiCw78zhpSNZ2e?utm_source=generator",
+              width: "100%",
+              height: 352,
+              allow:
+                "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture",
+            },
+          ],
+          links: [
+            {
+              label: "Open on Spotify",
+              url: "https://open.spotify.com/album/1wYXIOQcsiCw78zhpSNZ2e",
+            },
+          ],
+        },
+        {
           id: "people-watching-people",
           title: "People Watching People",
+          cover: peopleWatchingPeopleImage,
           role: "Mix Engineer",
           description:
             "Feature film mix engineering, contributing to spatial sound design and final mix prep.",
@@ -1050,6 +1154,16 @@ export const portfolioData = {
               src: peopleWatchingPeopleImage,
               alt: "People Watching People film still in a park",
               caption: "People Watching People",
+            },
+            {
+              type: "audio",
+              src: pwpIntro,
+              title: "People Watching People — Intro",
+            },
+            {
+              type: "audio",
+              src: pwpOutro,
+              title: "People Watching People — Outro",
             },
           ],
           links: [
