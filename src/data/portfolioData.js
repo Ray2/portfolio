@@ -4,10 +4,17 @@ import ifIForgetCover from "../if-i-forget-cover.jpg";
 import acesCover from "../aces-cover.jpg";
 import pwpIntro from "../pwp-intro.mp3";
 import pwpOutro from "../pwp-outro.mp3";
+import itpSchoolImage from "../itp-school.webp";
+import berkleeSchoolImage from "../berklee-school.webp";
+import mercorShowcaseImage from "../mercor.svg";
+import jujubeShowcaseImage from "../jujube2-showcase.webp";
+import nyuPsychShowcaseImage from "../nyupsych-showcase.webp";
+import nyuItpSiteShowcaseImage from "../nyuitpsite-showcase.webp";
+import researchPaperPdf from "../research.pdf";
 
 export const portfolioData = {
   name: "Ray Cogliano",
-  bio: "Creative developer & producer building audio-tech and web experiences, based in New York City",
+  bio: "Creative Developer & Producer\nbuilding audio-tech and web experiences, based\u00a0in\u00a0New\u00a0York\u00a0City",
   coordinates: "40.74344197625022, -73.98818390071976",
   coordinatesUrl:
     "https://www.google.com/maps?q=40.74344197625022,-73.98818390071976",
@@ -19,6 +26,8 @@ export const portfolioData = {
           id: "mercor-ai-model-trainer",
           title: "Mercor",
           logoStyle: "mercor",
+          showcaseImage: mercorShowcaseImage,
+          showcaseImageAlt: "Mercor AI platform illustration",
           role: "AI Model Trainer (Music)",
           location: "Remote",
           timeframe: "2026 – Present",
@@ -36,8 +45,11 @@ export const portfolioData = {
           id: "jujube-entertainment",
           title: "Jujube Entertainment",
           logoStyle: "jujube",
-          role: "Operations Manager / Creative Producer",
-          location: "Cambridge, MA (Remote)",
+          showcaseImage: jujubeShowcaseImage,
+          showcaseImageAlt:
+            "Artist performing in a Jujube Entertainment production",
+          role: "Operations Manager /\nCreative Producer",
+          location: "Cambridge, MA / Remote",
           timeframe: "2023 – Present",
           description:
             "Lead operations and creative production for cross-disciplinary artist partnerships and experiential campaigns.",
@@ -74,36 +86,21 @@ export const portfolioData = {
           ],
           links: [
             {
-              label: "Project Portfolio",
+              label: "otis-zheng.com",
               url: "https://www.otis-zheng.com/",
             },
           ],
         },
         {
-          id: "nyu-research",
-          title: "New York University",
-          logoStyle: "nyu",
-          role: "Research Collaborator",
-          location: "New York, NY",
-          timeframe: "2023 – 2024",
-          description:
-            "Collaborated on multimodal perception studies and tooling for large-scale audio/video analysis.",
-          highlights: [
-            "Co-authored a peer-reviewed ICASSP 2025 paper on multimodal machine learning for videoconferencing.",
-            "Designed and executed human-subjects experiments with 2,900 participants using Qualtrics and Python pipelines.",
-            "Implemented multimodal ML workflows leveraging VGGish, YAMNet, and Wav2Vec2 for audio/video feature extraction.",
-            "Applied Git-based collaboration, code review practices, and Agile cadences across the research team.",
-          ],
-          media: [],
-          links: [],
-        },
-        {
           id: "nyu-admin",
-          title: "New York University",
+          title: "New York University Tisch",
           logoStyle: "nyu",
-          role: "Administration Aide & Website Administrator",
+          showcaseImage: nyuItpSiteShowcaseImage,
+          showcaseImageAlt: "NYU ITP website homepage",
+          showcaseFit: "contain",
+          role: "Website Administrator /\nAdministration Aide",
           location: "Brooklyn, NY",
-          timeframe: "2025",
+          timeframe: "2024 – 2025",
           description:
             "Supported departmental operations and maintained digital touchpoints for faculty, staff, and students.",
           highlights: [
@@ -130,6 +127,37 @@ export const portfolioData = {
             },
           ],
         },
+        {
+          id: "nyu-research",
+          title: "New York University Psychology",
+          logoStyle: "nyu",
+          showcaseImage: nyuPsychShowcaseImage,
+          showcaseImageAlt:
+            "NYU News feature about machine learning and videoconference fluidity",
+          showcaseFit: "contain",
+          role: "Research Collaborator",
+          location: "New York, NY",
+          timeframe: "2023 – 2024",
+          description:
+            "Collaborated on multimodal perception studies and tooling for large-scale audio/video analysis.",
+          highlights: [
+            "Co-authored a peer-reviewed ICASSP 2025 paper on multimodal machine learning for videoconferencing.",
+            "Designed and executed human-subjects experiments with 2,900 participants using Qualtrics and Python pipelines.",
+            "Implemented multimodal ML workflows leveraging VGGish, YAMNet, and Wav2Vec2 for audio/video feature extraction.",
+            "Applied Git-based collaboration, code review practices, and Agile cadences across the research team.",
+          ],
+          media: [],
+          links: [
+            {
+              label: "NYU News",
+              url: "https://www.nyu.edu/about/news-publications/news/2025/march/can-ai-tell-us-if-those-zoom-calls-are-flowing-smoothly--new-stu.html?challenge=d06e90d7-4d8f-4b88-9d8c-10b73beb60f1",
+            },
+            {
+              label: "IEEE Xplore",
+              url: "https://ieeexplore.ieee.org/abstract/document/10889480",
+            },
+          ],
+        },
       ],
     },
     {
@@ -138,8 +166,11 @@ export const portfolioData = {
         {
           id: "nyu-itp",
           title: "New York University",
-          subtitle: "MPS, Interactive Telecommunications Program",
+          role: "MPS, Interactive Telecommunications Program",
           logoStyle: "nyu",
+          schoolImage: itpSchoolImage,
+          schoolImageAlt: "NYU Interactive Telecommunications Program floor",
+          location: "Brooklyn, NY",
           timeframe: "2023–2025",
           courseSection: "NYU Courses",
           description:
@@ -150,8 +181,11 @@ export const portfolioData = {
         {
           id: "berklee-epd",
           title: "Berklee College of Music",
-          subtitle: "B.M. Electronic Production & Design",
+          role: "B.M. Electronic Production & Design",
           logoStyle: "berklee",
+          schoolImage: berkleeSchoolImage,
+          schoolImageAlt: "Berklee College of Music recording studio",
+          location: "Boston, MA",
           timeframe: "2019–2022",
           courseSection: "Berklee Courses",
           description:
@@ -418,12 +452,54 @@ export const portfolioData = {
       ],
     },
     {
+      title: "Research",
+      items: [
+        {
+          id: "icassp-paper",
+          title: "New York University Psychology",
+          role:
+            "Multimodal Machine Learning Can Predict Videoconference Fluidity and Enjoyment",
+          logoStyle: "nyu",
+          showcaseEmbed: researchPaperPdf,
+          showcaseEmbedTitle:
+            "Multimodal Machine Learning Can Predict Videoconference Fluidity and Enjoyment PDF",
+          timeframe: "2025",
+          description:
+            "Co-authored through the NYU Psychology Lab, this ICASSP 2025 study used audio embeddings, facial actions, and body-motion features from thousands of RoomReader videoconference clips to predict low conversational fluidity and enjoyment. The best multimodal models reached an ROC-AUC of 0.87, with audio features proving most predictive.",
+          media: [
+            {
+              type: "embed",
+              src: researchPaperPdf,
+              title:
+                "Multimodal Machine Learning Can Predict Videoconference Fluidity and Enjoyment PDF",
+              width: "100%",
+              height: 750,
+            },
+          ],
+          links: [
+            {
+              label: "IEEE Xplore",
+              url: "https://ieeexplore.ieee.org/abstract/document/10889480",
+            },
+            {
+              label: "NYU News",
+              url: "https://www.nyu.edu/about/news-publications/news/2025/march/can-ai-tell-us-if-those-zoom-calls-are-flowing-smoothly--new-stu.html?challenge=d06e90d7-4d8f-4b88-9d8c-10b73beb60f1",
+            },
+          ],
+        },
+      ],
+    },
+    {
       title: "Projects",
       items: [
         {
           id: "tmlne",
           title: "TMLNE",
           logoStyle: "tmlne",
+          showcaseEmbed:
+            "https://tmlne.com/tl/26n4ff?timeline=timelines%2Fnzj4EDfzqAgJNVHdbsrCfbgr3Fs2%2Fprojects%2FYJSKxNMDGAhVhNdcnDHf&embed=1",
+          showcaseEmbedTitle: "TMLNE live site preview",
+          showcaseAspectRatio: "16 / 9",
           timeframe: "2026",
           description:
             "Shareable timeline-building application developed with React and Firebase for arranging complex events across multiple synchronized rows.",
@@ -436,9 +512,9 @@ export const portfolioData = {
             {
               type: "embed",
               title: "TMLNE Site Preview",
-              src: "https://tmlne.com",
+              src: "https://tmlne.com/tl/26n4ff?timeline=timelines%2Fnzj4EDfzqAgJNVHdbsrCfbgr3Fs2%2Fprojects%2FYJSKxNMDGAhVhNdcnDHf&embed=1",
               width: "100%",
-              height: 750,
+              height: 600,
             },
           ],
           links: [
@@ -452,6 +528,9 @@ export const portfolioData = {
           id: "eterna",
           title: "ETERNA",
           logoStyle: "eterna",
+          showcaseEmbed: "https://et3rna.com",
+          showcaseEmbedTitle: "ETERNA live site preview",
+          showcaseAspectRatio: "16 / 9",
           timeframe: "2025",
           description:
             "Browser-based DJ mixing application developed with React and the Web Audio API for real-time performance and synchronized audio control.",
@@ -480,6 +559,9 @@ export const portfolioData = {
           id: "pixelcam",
           title: "PIXELCAM",
           logoStyle: "pixelcam",
+          showcaseEmbed: "https://pixelcam.space",
+          showcaseEmbedTitle: "PIXELCAM live site preview",
+          showcaseAspectRatio: "16 / 9",
           timeframe: "2024",
           description:
             "Retro-inspired camera and social platform developed with Expo, React Native Web, Firebase, and Cloudflare Workers and R2.",
@@ -507,6 +589,9 @@ export const portfolioData = {
         {
           id: "rc-707-drum-machine",
           title: "Rhythm Cartridge 707 (RC-707) Drum Machine",
+          showcaseEmbed: "https://www.youtube.com/embed/oheIi9kkfik",
+          showcaseEmbedTitle: "RC-707 Drum Machine video preview",
+          showcaseAspectRatio: "16 / 9",
           timeframe: "2023–2024",
           description:
             "Compact cartridge-based drum machine with four hot-swappable sound generators and an eight-step, four-track sequencer.",
@@ -536,6 +621,9 @@ export const portfolioData = {
         {
           id: "arduino-player-piano",
           title: "Arduino Powered Player Piano",
+          showcaseEmbed: "https://www.youtube.com/embed/5REfPB5XNJc",
+          showcaseEmbedTitle: "Arduino Powered Player Piano video preview",
+          showcaseAspectRatio: "16 / 9",
           timeframe: "2022–2023",
           description:
             "MIDI-driven player piano prototype bridging hardware, firmware, and bespoke sequencing tools.",
@@ -998,32 +1086,12 @@ export const portfolioData = {
       ],
     },
     {
-      title: "Research",
-      items: [
-        {
-          id: "icassp-paper",
-          title:
-            "Multimodal Machine Learning Can Predict Videoconference Fluidity and Enjoyment",
-          logoStyle: "nyu",
-          timeframe: "2025",
-          description:
-            "Co-authored through the NYU Psychology Lab, this ICASSP 2025 study used audio embeddings, facial actions, and body-motion features from thousands of RoomReader videoconference clips to predict low conversational fluidity and enjoyment. The best multimodal models reached an ROC-AUC of 0.87, with audio features proving most predictive.",
-          media: [],
-          links: [
-            {
-              label: "IEEE Xplore",
-              url: "https://ieeexplore.ieee.org/abstract/document/10889480",
-            },
-          ],
-        },
-      ],
-    },
-    {
       title: "Music",
       items: [
         {
           id: "soundcloud-amoeba",
           title: "AMOEBA [raw]「2020-2021」⟨sliced⟩",
+          coverFlowStart: true,
           cover: amoebaCover,
           description:
             "Playlist of experimental electronic sketches produced throughout the AMOEBA sessions.",

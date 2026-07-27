@@ -34,6 +34,8 @@ body {
 
 #root,
 .app-shell {
+  height: 100vh;
+  height: 100dvh;
   min-height: 100vh;
   max-width: 100%;
 }
@@ -42,7 +44,8 @@ body {
   position: relative;
   display: flex;
   justify-content: center;
-  padding: 2rem;
+  padding: 0;
+  overflow: hidden;
   transition: background-color 180ms ease, color 180ms ease;
 }
 
@@ -76,7 +79,7 @@ body {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 1200px;
+  max-width: none;
 }
 
 .app-shell.theme-dark {
@@ -123,4 +126,17 @@ body {
   border-color: rgba(255, 255, 255, 0.28);
   background: rgba(8, 10, 17, 0.72);
   color: #f5f7fb;
+}
+
+@media (max-width: 900px) {
+  #root,
+  .app-shell {
+    height: auto;
+  }
+
+  .app-shell {
+    min-height: 100vh;
+    padding: 0;
+    overflow: visible;
+  }
 }
