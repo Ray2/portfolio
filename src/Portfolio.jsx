@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { portfolioData } from "./data/portfolioData";
 import headshotImage from "./rayheadshot.webp";
 import eternaLogo from "./eterna-logo.png";
+import blubluLogo from "./blublu-logo.avif";
 import jujubeLogo from "./jujube-logo.webp";
 import mercorLogo from "./mercor-logo.webp";
 import mercorShowcaseLogo from "./mercor-showcase.webp";
@@ -122,6 +123,14 @@ export default function Portfolio() {
     });
   };
 
+  const musicSection = data.sections.find(
+    (section) => section.title === "Music"
+  );
+  const handleSidebarMusicSelect = (itemId) => {
+    setActiveItemId(itemId);
+    window.requestAnimationFrame(() => navigateToSection("Music"));
+  };
+
   return (
     <div className="container">
       <StyleTag />
@@ -197,6 +206,18 @@ export default function Portfolio() {
             <span>IMDb</span>
           </a>
         </div>
+        {musicSection && (
+          <section className="sidebar-music" aria-label="Music releases">
+            <MusicCoverFlow
+              items={musicSection.items}
+              isSectionOpen
+              activeItemId={activeItemId}
+              onSelect={handleSidebarMusicSelect}
+              compact
+              showDetails={false}
+            />
+          </section>
+        )}
       </aside>
       <div className="content-shell">
         <main className="content" ref={contentRef}>
@@ -502,6 +523,8 @@ function MusicCoverFlow({
   isSectionOpen,
   activeItemId,
   onSelect,
+  compact = false,
+  showDetails: renderDetails = true,
 }) {
   const displayItems = useMemo(() => {
     const featuredIndex = items.findIndex((item) => item.coverFlowStart);
@@ -537,7 +560,19 @@ function MusicCoverFlow({
     if (activeIndex >= 0) {
       selectedIndexRef.current = activeIndex;
       setSelectedIndex(activeIndex);
+      const animationFrame = window.requestAnimationFrame(() => {
+        const track = trackRef.current;
+        const cover = track?.querySelector(
+          `[data-cover-index="${activeIndex}"]`
+        );
+        if (!track || !cover) return;
+        const targetLeft =
+          cover.offsetLeft - (track.clientWidth - cover.offsetWidth) / 2;
+        track.scrollTo({ left: targetLeft, behavior: "smooth" });
+      });
+      return () => window.cancelAnimationFrame(animationFrame);
     }
+    return undefined;
   }, [activeItemId, displayItems]);
 
   useEffect(() => {
@@ -617,11 +652,13 @@ function MusicCoverFlow({
   };
 
   const selectedItem = displayItems[selectedIndex];
-  const showDetails = selectedItem?.id === activeItemId;
+  const isDetailsOpen = selectedItem?.id === activeItemId;
 
   return (
     <div
-      className={`music-flow-shell${isSectionOpen ? " is-open" : ""}`}
+      className={`music-flow-shell${isSectionOpen ? " is-open" : ""}${
+        compact ? " is-compact" : ""
+      }`}
       aria-hidden={!isSectionOpen}
     >
       <div className="music-coverflow">
@@ -688,7 +725,7 @@ function MusicCoverFlow({
           <CoverFlowChevron direction="right" />
         </button>
       </div>
-      {showDetails && (
+      {renderDetails && isDetailsOpen && (
         <div className="music-flow-details">
           <ItemDetails item={selectedItem} />
         </div>
@@ -767,7 +804,9 @@ function PortfolioListItem({
   showItemChevron,
 }) {
   const isEmployer =
-    item.logoStyle === "mercor" || item.logoStyle === "jujube";
+    item.logoStyle === "mercor" ||
+    item.logoStyle === "jujube" ||
+    item.logoStyle === "blublu";
   const isSchool = isResumeShowcase && Boolean(item.schoolImage);
   const hasSeparateLocation =
     isEmployer ||
@@ -961,9 +1000,17 @@ function ProjectTitle({ item }) {
     );
   }
 
-  if (item.logoStyle === "jujube" || item.logoStyle === "mercor") {
-    const employerLogo =
-      item.logoStyle === "mercor" ? mercorLogo : jujubeLogo;
+  if (
+    item.logoStyle === "jujube" ||
+    item.logoStyle === "mercor" ||
+    item.logoStyle === "blublu"
+  ) {
+    const employerLogos = {
+      blublu: blubluLogo,
+      jujube: jujubeLogo,
+      mercor: mercorLogo,
+    };
+    const employerLogo = employerLogos[item.logoStyle];
 
     return (
       <span
@@ -1080,21 +1127,393 @@ function CourseGroups({ groups }) {
   return (
     <div className="course-groups">
       {groups.map((group) => (
-        <details className="course-group" key={group.id}>
+        <details
+          className="course-group"
+          key={group.id}
+          open={group.id === "nyu-3d-ar-virtual-environments"}
+        >
           <summary>{group.title}</summary>
           <div className="course-group-content">
             {group.description && <p>{group.description}</p>}
+            {group.id === "nyu-3d-ar-virtual-environments" && (
+              <StlModelGallery models={group.models || []} />
+            )}
             {Array.isArray(group.highlights) && group.highlights.length > 0 && (
               <ul>
-                {group.highlights.map((course, index) => (
-                  <li key={`${group.id}-course-${index}`}>{course}</li>
-                ))}
+                {group.highlights.map((course, index) => {
+                  const courseText =
+                    typeof course === "string" ? course : course.text;
+                  const courseMedia =
+                    typeof course === "object" && Array.isArray(course.media)
+                      ? course.media
+                      : [];
+                  const courseLinks =
+                    typeof course === "object" && Array.isArray(course.links)
+                      ? course.links
+                      : [];
+                  const courseProjectTitle =
+                    typeof course === "object" ? course.projectTitle : null;
+
+                  return (
+                    <li key={`${group.id}-course-${index}`}>
+                      {courseText}
+                      {courseProjectTitle && (
+                        <h4 className="course-project-title">
+                          {courseProjectTitle}
+                        </h4>
+                      )}
+                      {courseMedia.length > 0 && (
+                        <div className="course-media-grid">
+                          {courseMedia.map((media, mediaIndex) => (
+                            <MediaBlock
+                              key={`${group.id}-course-${index}-media-${mediaIndex}`}
+                              media={media}
+                            />
+                          ))}
+                        </div>
+                      )}
+                      {courseLinks.length > 0 && (
+                        <div className="course-downloads">
+                          {courseLinks.map((link) => (
+                            <a
+                              className="item-link"
+                              href={link.url}
+                              download={link.download || undefined}
+                              key={link.url}
+                            >
+                              {link.label}
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>
         </details>
       ))}
     </div>
+  );
+}
+
+function StlModelGallery({ models }) {
+  const [localModels, setLocalModels] = useState([]);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const localUrlsRef = useRef([]);
+  const trackRef = useRef(null);
+  const displayModels = useMemo(
+    () => [...models, ...localModels],
+    [models, localModels]
+  );
+
+  useEffect(
+    () => () => {
+      localUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+    },
+    []
+  );
+
+  useEffect(() => {
+    setSelectedIndex((current) =>
+      Math.min(current, Math.max(0, displayModels.length - 1))
+    );
+  }, [displayModels.length]);
+
+  useEffect(() => {
+    const track = trackRef.current;
+    const card = track?.querySelector(`[data-model-index="${selectedIndex}"]`);
+    if (!track || !card) return;
+
+    const targetLeft =
+      card.offsetLeft - (track.clientWidth - card.offsetWidth) / 2;
+    track.scrollTo({ left: targetLeft, behavior: "smooth" });
+  }, [selectedIndex]);
+
+  const addLocalModels = (files) => {
+    const additions = Array.from(files || [])
+      .filter((file) => /\.stl$/i.test(file.name))
+      .map((file, index) => {
+        const src = URL.createObjectURL(file);
+        localUrlsRef.current.push(src);
+        return {
+          id: `local-stl-${Date.now()}-${index}`,
+          title: file.name.replace(/\.stl$/i, ""),
+          src,
+          color: "#8bb8d8",
+          isLocal: true,
+        };
+      });
+
+    if (additions.length === 0) return;
+    setLocalModels((current) => {
+      const firstNewIndex = models.length + current.length;
+      setSelectedIndex(firstNewIndex);
+      return [...current, ...additions];
+    });
+  };
+
+  const stepModel = (direction) => {
+    if (displayModels.length === 0) return;
+    setSelectedIndex(
+      (current) =>
+        (current + direction + displayModels.length) % displayModels.length
+    );
+  };
+
+  const selectedModel = displayModels[selectedIndex];
+
+  return (
+    <div className="stl-gallery">
+      <div className="stl-gallery-heading">
+        <div>
+          <h4>3D Models</h4>
+          <p>Drag to rotate · scroll to zoom · right-drag to pan</p>
+        </div>
+        <label className="stl-upload-button">
+          Preview STL files
+          <input
+            type="file"
+            accept=".stl,model/stl"
+            multiple
+            onChange={(event) => {
+              addLocalModels(event.target.files);
+              event.target.value = "";
+            }}
+          />
+        </label>
+      </div>
+
+      {selectedModel ? (
+        <>
+          <StlModelViewer model={selectedModel} />
+          <div className="stl-coverflow">
+            <button
+              type="button"
+              className="coverflow-arrow coverflow-arrow-left"
+              aria-label="Previous 3D model"
+              onClick={() => stepModel(-1)}
+            >
+              <CoverFlowChevron direction="left" />
+            </button>
+            <div className="stl-coverflow-track" ref={trackRef}>
+              {displayModels.map((model, index) => {
+                const position =
+                  index === selectedIndex
+                    ? "is-selected"
+                    : index < selectedIndex
+                    ? "is-left"
+                    : "is-right";
+
+                return (
+                  <button
+                    type="button"
+                    className={`stl-coverflow-card ${position}`}
+                    data-model-index={index}
+                    aria-pressed={index === selectedIndex}
+                    key={model.id || `${model.src}-${index}`}
+                    onClick={() => setSelectedIndex(index)}
+                  >
+                    <span className="stl-coverflow-art">
+                      {model.preview ? (
+                        <img src={model.preview} alt="" />
+                      ) : (
+                        <WireframeCubeIcon />
+                      )}
+                    </span>
+                    <span className="stl-coverflow-title">{model.title}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              type="button"
+              className="coverflow-arrow coverflow-arrow-right"
+              aria-label="Next 3D model"
+              onClick={() => stepModel(1)}
+            >
+              <CoverFlowChevron direction="right" />
+            </button>
+          </div>
+        </>
+      ) : (
+        <div className="stl-gallery-empty">
+          <WireframeCubeIcon />
+          <strong>STL viewer ready</strong>
+          <span>
+            Add model entries in portfolioData.js or preview multiple STL files
+            from this device.
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StlModelViewer({ model }) {
+  const shellRef = useRef(null);
+  const canvasRef = useRef(null);
+  const [status, setStatus] = useState("loading");
+
+  useEffect(() => {
+    const shell = shellRef.current;
+    const canvas = canvasRef.current;
+    if (!shell || !canvas || !model?.src) return undefined;
+
+    let active = true;
+    let animationFrame = 0;
+    let geometry = null;
+    let mesh = null;
+    let renderer = null;
+    let scene = null;
+    let controls = null;
+    let resizeObserver = null;
+
+    setStatus("loading");
+
+    const initialize = async () => {
+      try {
+        const [THREE, { OrbitControls }, { STLLoader }] = await Promise.all([
+          import("three"),
+          import("three/addons/controls/OrbitControls.js"),
+          import("three/addons/loaders/STLLoader.js"),
+        ]);
+        if (!active) return;
+
+        renderer = new THREE.WebGLRenderer({
+          canvas,
+          antialias: true,
+          alpha: true,
+        });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        renderer.setClearColor(0x000000, 0);
+
+        scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(38, 1, 0.01, 100);
+        camera.position.set(2.7, 2.05, 3.2);
+
+        controls = new OrbitControls(camera, canvas);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.07;
+        controls.enablePan = true;
+        controls.minDistance = 1.7;
+        controls.maxDistance = 7;
+
+        scene.add(new THREE.HemisphereLight(0xffffff, 0x26313d, 2.5));
+        const keyLight = new THREE.DirectionalLight(0xffffff, 3.2);
+        keyLight.position.set(4, 5, 3);
+        scene.add(keyLight);
+        const fillLight = new THREE.DirectionalLight(0x9fc8ff, 1.8);
+        fillLight.position.set(-4, 1, -2);
+        scene.add(fillLight);
+
+        const resize = () => {
+          const width = Math.max(1, shell.clientWidth);
+          const height = Math.max(1, shell.clientHeight);
+          renderer.setSize(width, height, false);
+          camera.aspect = width / height;
+          camera.updateProjectionMatrix();
+        };
+        resizeObserver = new ResizeObserver(resize);
+        resizeObserver.observe(shell);
+        resize();
+
+        const loader = new STLLoader();
+        loader.load(
+          model.src,
+          (loadedGeometry) => {
+            if (!active) {
+              loadedGeometry.dispose();
+              return;
+            }
+
+            geometry = loadedGeometry;
+            geometry.computeVertexNormals();
+            geometry.center();
+            geometry.computeBoundingSphere();
+            const radius = Math.max(
+              geometry.boundingSphere?.radius || 1,
+              0.001
+            );
+            geometry.scale(1.25 / radius, 1.25 / radius, 1.25 / radius);
+
+            const material = new THREE.MeshStandardMaterial({
+              color: model.color || "#8bb8d8",
+              roughness: 0.58,
+              metalness: 0.08,
+              side: THREE.DoubleSide,
+            });
+            mesh = new THREE.Mesh(geometry, material);
+            scene.add(mesh);
+            controls.target.set(0, 0, 0);
+            controls.update();
+            setStatus("ready");
+          },
+          undefined,
+          () => {
+            if (active) setStatus("error");
+          }
+        );
+
+        const render = () => {
+          controls.update();
+          renderer.render(scene, camera);
+          animationFrame = window.requestAnimationFrame(render);
+        };
+        render();
+      } catch {
+        if (active) setStatus("error");
+      }
+    };
+
+    initialize();
+
+    return () => {
+      active = false;
+      window.cancelAnimationFrame(animationFrame);
+      resizeObserver?.disconnect();
+      controls?.dispose();
+      if (mesh && scene) {
+        scene.remove(mesh);
+        mesh.material.dispose();
+      }
+      geometry?.dispose();
+      renderer?.dispose();
+    };
+  }, [model]);
+
+  return (
+    <div className="stl-viewer-shell" ref={shellRef}>
+      <canvas
+        ref={canvasRef}
+        aria-label={`Interactive 3D viewer for ${model.title}`}
+      />
+      <div className="stl-viewer-name">{model.title}</div>
+      {status === "loading" && (
+        <div className="stl-viewer-status">Loading model…</div>
+      )}
+      {status === "error" && (
+        <div className="stl-viewer-status is-error">
+          This STL model could not be loaded.
+        </div>
+      )}
+    </div>
+  );
+}
+
+function WireframeCubeIcon() {
+  return (
+    <svg
+      className="wireframe-cube-icon"
+      viewBox="0 0 64 64"
+      aria-hidden="true"
+    >
+      <path d="M32 5 55 18 32 31 9 18 32 5Z" />
+      <path d="M9 18v27l23 14 23-14V18" />
+      <path d="M32 31v28M9 45l23-14 23 14" />
+    </svg>
   );
 }
 
@@ -1346,6 +1765,7 @@ a,button,[role="button"],summary{cursor:url("${xpPointer}") 7 1,pointer}
 .sidebar-contact a{display:inline-flex;align-items:center;gap:.45rem;color:#333;font-size:.9rem;text-decoration:none}
 .contact-icon{width:17px;height:17px;flex:0 0 auto}
 .sidebar-contact a:hover{color:#777;text-decoration:underline}
+.sidebar-music{min-width:0;margin-top:.55rem}
 .section{margin-bottom:.1rem}
 .section.section-open{margin-bottom:.65rem}
 .section-title{font-size:2rem;margin:0}
@@ -1372,6 +1792,18 @@ a,button,[role="button"],summary{cursor:url("${xpPointer}") 7 1,pointer}
 .sketch-title:hover{color:#777}
 .music-flow-shell{max-height:0;overflow:hidden;opacity:0;transform:translateY(-.4rem);transition:max-height .55s ease,opacity .3s ease,transform .45s ease;pointer-events:none}
 .music-flow-shell.is-open{max-height:1800px;margin:.35rem 0 .8rem;opacity:1;transform:translateY(0);pointer-events:auto}
+.music-flow-shell.is-compact.is-open{max-height:170px;margin:0}
+.music-flow-shell.is-compact .music-coverflow,
+.music-flow-shell.is-compact .coverflow-track{height:160px;min-height:160px}
+.music-flow-shell.is-compact .coverflow-track{gap:.2rem;padding:4px calc(50% - 47px)}
+.music-flow-shell.is-compact .coverflow-card{flex-basis:94px;gap:.25rem;font-size:.56rem}
+.music-flow-shell.is-compact .coverflow-generated-cover{padding:10%}
+.music-flow-shell.is-compact .coverflow-generated-artist{font-size:.48rem}
+.music-flow-shell.is-compact .coverflow-generated-title{font-size:.78rem}
+.music-flow-shell.is-compact .coverflow-arrow{width:28px;height:40px}
+.music-flow-shell.is-compact .coverflow-arrow-left{left:2px}
+.music-flow-shell.is-compact .coverflow-arrow-right{right:2px}
+.music-flow-shell.is-compact .coverflow-chevron{width:9px;height:15px}
 .music-coverflow{position:relative;isolation:isolate;overflow:hidden;min-height:310px;background:transparent}
 .coverflow-track{display:flex;align-items:center;gap:clamp(.4rem,2vw,1.2rem);height:310px;padding:30px calc(50% - clamp(72px,13.5vw,105px)) 20px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scroll-behavior:smooth;overscroll-behavior-x:contain;perspective:900px;scrollbar-width:none}
 .coverflow-track::-webkit-scrollbar{display:none}
@@ -1484,14 +1916,47 @@ a,button,[role="button"],summary{cursor:url("${xpPointer}") 7 1,pointer}
 .item-link{display:inline-flex;align-items:center;padding:.35rem .75rem;border-radius:999px;border:1px solid #d0d0d0;background:#fff;color:#333;font-size:.85rem;text-decoration:none;transition:border-color .15s ease, color .15s ease}
 .item-link:hover{border-color:#111;color:#111}
 .item-details-placeholder{margin:0;color:#777;font-size:.9rem}
-.course-groups{margin:.75rem 0;display:grid;gap:.35rem}
-.course-group{border-top:1px solid rgba(17,17,17,.15)}
+.course-groups{min-width:0;margin:.75rem 0;display:grid;gap:.35rem}
+.course-group{width:100%;min-width:0;max-width:100%;border-top:1px solid rgba(17,17,17,.15)}
 .course-group:last-child{border-bottom:1px solid rgba(17,17,17,.15)}
 .course-group summary{padding:.55rem 0;font-weight:600;cursor:pointer;list-style-position:inside}
-.course-group-content{padding:0 0 .65rem 1.1rem}
+.course-group-content{box-sizing:border-box;width:100%;min-width:0;max-width:100%;padding:0 0 .65rem 1.1rem}
 .course-group-content p{margin:0 0 .5rem;color:#444}
 .course-group-content ul{margin:0;padding-left:1.25rem;color:#333}
 .course-group-content li{margin:.45rem 0;font-size:.95rem;line-height:1.5}
+.course-project-title{margin:.75rem 0 .35rem;font-size:1rem}
+.course-media-grid{display:grid;min-width:0;margin:.7rem 0 1rem;gap:.75rem}
+.course-downloads{display:flex;flex-wrap:wrap;gap:.5rem;margin:.15rem 0 1rem}
+.stl-gallery{box-sizing:border-box;width:100%;min-width:0;max-width:100%;margin:.8rem 0 1rem;padding:clamp(.8rem,2vw,1.2rem);overflow:hidden;border:1px solid rgba(17,17,17,.16);background:rgba(255,255,255,.24)}
+.stl-gallery-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:.8rem}
+.stl-gallery-heading h4{margin:0;font-size:1rem}
+.stl-gallery-heading p{margin:.2rem 0 0;color:#68727d;font-size:.72rem}
+.stl-upload-button{display:inline-flex;flex:0 0 auto;align-items:center;padding:.4rem .72rem;border:1px solid rgba(17,17,17,.22);border-radius:999px;background:rgba(255,255,255,.65);color:#303a44;font-size:.72rem;font-weight:700;cursor:pointer}
+.stl-upload-button:hover{border-color:#303a44}
+.stl-upload-button:focus-within{outline:2px solid rgba(60,118,255,.55);outline-offset:2px}
+.stl-upload-button input{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.stl-viewer-shell{position:relative;width:100%;height:clamp(300px,48vw,470px);overflow:hidden;background:radial-gradient(circle at 50% 36%,rgba(255,255,255,.92),rgba(204,216,226,.48) 58%,rgba(122,139,154,.28));box-shadow:inset 0 0 0 1px rgba(17,17,17,.1)}
+.stl-viewer-shell canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+.stl-viewer-shell canvas:active{cursor:grabbing}
+.stl-viewer-name{position:absolute;top:.65rem;left:.75rem;padding:.28rem .5rem;border-radius:999px;background:rgba(235,243,248,.82);color:#303a44;font-size:.7rem;font-weight:700;pointer-events:none}
+.stl-viewer-status{position:absolute;inset:50% auto auto 50%;translate:-50% -50%;padding:.45rem .7rem;border-radius:999px;background:rgba(17,17,17,.72);color:#fff;font-size:.75rem;pointer-events:none}
+.stl-viewer-status.is-error{background:rgba(122,32,32,.84)}
+.stl-coverflow{position:relative;isolation:isolate;min-height:190px;margin-top:.55rem;overflow:hidden}
+.stl-coverflow-track{display:flex;height:190px;align-items:center;gap:clamp(.35rem,1.5vw,.8rem);padding:18px calc(50% - 62px) 14px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scroll-behavior:smooth;overscroll-behavior-x:contain;perspective:800px;scrollbar-width:none}
+.stl-coverflow-track::-webkit-scrollbar{display:none}
+.stl-coverflow-card{display:flex;flex:0 0 124px;min-width:0;flex-direction:column;align-items:center;gap:.45rem;padding:0;border:0;background:transparent;color:#303a44;font:700 .68rem/1.2 'Syne',sans-serif;cursor:pointer;scroll-snap-align:center;transform-style:preserve-3d;transition:transform .25s ease,opacity .25s ease}
+.stl-coverflow-card.is-left{transform:translateX(9%) rotateY(46deg) scale(.8);transform-origin:right center;opacity:.65}
+.stl-coverflow-card.is-right{transform:translateX(-9%) rotateY(-46deg) scale(.8);transform-origin:left center;opacity:.65}
+.stl-coverflow-card.is-selected{z-index:2;transform:translateY(-3px);opacity:1}
+.stl-coverflow-card:focus-visible{outline:2px solid rgba(60,118,255,.7);outline-offset:3px}
+.stl-coverflow-art{display:grid;width:112px;aspect-ratio:1;place-items:center;overflow:hidden;background:linear-gradient(145deg,#dce8f0,#8396a5);box-shadow:0 9px 18px rgba(20,35,55,.3)}
+.stl-coverflow-card.is-selected .stl-coverflow-art{box-shadow:0 13px 24px rgba(20,35,55,.42),0 0 0 1px rgba(255,255,255,.7)}
+.stl-coverflow-art img{display:block;width:100%;height:100%;object-fit:cover}
+.stl-coverflow-title{display:block;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
+.wireframe-cube-icon{display:block;width:56%;height:56%;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.stl-gallery-empty{display:grid;min-height:260px;padding:2rem;place-items:center;align-content:center;gap:.55rem;border:1px dashed rgba(17,17,17,.24);background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.78),rgba(204,216,226,.35));color:#56616c;text-align:center}
+.stl-gallery-empty .wireframe-cube-icon{width:72px;height:72px}
+.stl-gallery-empty span{max-width:420px;color:#68727d;font-size:.78rem;line-height:1.45}
 .media-grid{display:grid;min-width:0;max-width:100%;gap:1rem}
 .media,.media iframe,.media img,.media video,.media audio{max-width:100%}
 .media-audio{margin:0;padding:.8rem;border:1px solid rgba(17,17,17,.18);border-radius:.6rem;background:rgba(255,255,255,.2)}
@@ -1535,6 +2000,15 @@ a,button,[role="button"],summary{cursor:url("${xpPointer}") 7 1,pointer}
 .theme-dark .item.active .item-title{color:#dce3ec}
 .theme-dark .online-status{border-color:rgba(255,255,255,.9)}
 .theme-dark .course-group{border-color:rgba(255,255,255,.18)}
+.theme-dark .stl-gallery{border-color:rgba(255,255,255,.18);background:rgba(8,10,17,.2)}
+.theme-dark .stl-gallery-heading p,
+.theme-dark .stl-gallery-empty span{color:#aeb8c5}
+.theme-dark .stl-upload-button{border-color:rgba(255,255,255,.25);background:rgba(8,10,17,.58);color:#e7ebf1}
+.theme-dark .stl-viewer-shell{background:radial-gradient(circle at 50% 36%,rgba(63,75,90,.88),rgba(19,25,33,.82) 62%,rgba(8,10,17,.9))}
+.theme-dark .stl-viewer-name{background:rgba(23,26,32,.84);color:#e7ebf1}
+.theme-dark .stl-coverflow-card{color:#e7ebf1}
+.theme-dark .stl-coverflow-art{background:linear-gradient(145deg,#536879,#1f2933)}
+.theme-dark .stl-gallery-empty{border-color:rgba(255,255,255,.24);background:radial-gradient(circle at 50% 35%,rgba(58,70,84,.6),rgba(8,10,17,.42));color:#dce4ef}
 .theme-dark .sidebar{border-right-color:rgba(255,255,255,.16);background-color:rgba(23,26,32,.86)}
 .theme-dark .content{scrollbar-color:rgba(190,205,225,.62) rgba(190,205,225,.12)}
 .theme-dark .content::-webkit-scrollbar-track{background:rgba(190,205,225,.12)}
@@ -1575,8 +2049,12 @@ a,button,[role="button"],summary{cursor:url("${xpPointer}") 7 1,pointer}
   .music-coverflow,.coverflow-track{min-height:270px;height:270px}
   .coverflow-track{padding-top:34px;padding-bottom:16px}
   .coverflow-arrow{width:34px;height:46px}
+  .stl-gallery{padding:.65rem}
+  .stl-gallery-heading{flex-direction:column}
+  .stl-viewer-shell{height:300px}
+  .stl-coverflow,.stl-coverflow-track{min-height:170px;height:170px}
 }
-@media (min-width:901px) and (max-height:680px){
+@media (min-width:901px) and (max-height:800px){
   .sidebar{padding:1rem}
   .name{margin-bottom:.5rem;font-size:1.7rem}
   .profile-image{width:min(100%,22vh);margin-bottom:.5rem}

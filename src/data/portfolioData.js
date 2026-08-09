@@ -8,9 +8,59 @@ import itpSchoolImage from "../itp-school.webp";
 import berkleeSchoolImage from "../berklee-school.webp";
 import mercorShowcaseImage from "../mercor.svg";
 import jujubeShowcaseImage from "../jujube2-showcase.webp";
+import blubluShowcaseImage from "../blublu-showcase.webp";
 import nyuPsychShowcaseImage from "../nyupsych-showcase.webp";
 import nyuItpSiteShowcaseImage from "../nyuitpsite-showcase.webp";
 import researchPaperPdf from "../research.pdf";
+
+const stlModelUrls = import.meta.glob("../*.stl", {
+  eager: true,
+  query: "?url",
+  import: "default",
+});
+
+const stlTitleOverrides = {
+  "BASE lofi": "Lo-Fi Drum Machine Base",
+  DRUMBODDDDEY: "Drum Machine Body",
+  Iphone13_case: "iPhone 13 Case",
+  "Lofa drumd12-6-23": "Lo-Fi Drum Machine — 12/6/23",
+  RayCase: "Ray Case",
+  cartfuck: "Cartridge Prototype",
+  faceeee: "Faceplate Prototype",
+  "jad body": "JAD Body",
+  "new drumbod": "Drum Machine Body — New",
+};
+
+const stlColors = [
+  "#8bb8d8",
+  "#d7a77b",
+  "#9bbf9a",
+  "#b7a1d4",
+  "#d4bd78",
+  "#85bcb7",
+];
+
+const nyu3dModels = Object.entries(stlModelUrls)
+  .map(([path, src], index) => {
+    const filename = path.split("/").pop() || `Model ${index + 1}.stl`;
+    const basename = filename.replace(/\.stl$/i, "");
+    const generatedTitle = basename
+      .replace(/_/g, " ")
+      .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    return {
+      id: `stl-${basename
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "")}-${index}`,
+      title: stlTitleOverrides[basename] || generatedTitle,
+      src,
+      color: stlColors[index % stlColors.length],
+    };
+  })
+  .sort((a, b) => a.title.localeCompare(b.title, undefined, { numeric: true }));
 
 export const portfolioData = {
   name: "Ray Cogliano",
@@ -22,25 +72,6 @@ export const portfolioData = {
     {
       title: "Work",
       items: [
-        {
-          id: "mercor-ai-model-trainer",
-          title: "Mercor",
-          logoStyle: "mercor",
-          showcaseImage: mercorShowcaseImage,
-          showcaseImageAlt: "Mercor AI platform illustration",
-          role: "AI Model Trainer (Music)",
-          location: "Remote",
-          timeframe: "2026 – Present",
-          description:
-            "Develop and evaluate expert music and audio tasks used to train and assess large language models.",
-          highlights: [
-            "Authored and reviewed music theory and technical audio evaluation tasks for AI model training and evaluation.",
-            "Evaluated AI-generated responses for accuracy in music theory, harmonic analysis, and spectrogram interpretation.",
-            "Wrote structured reference answers and annotations to improve large-language-model training data quality.",
-          ],
-          media: [],
-          links: [],
-        },
         {
           id: "jujube-entertainment",
           title: "Jujube Entertainment",
@@ -90,6 +121,45 @@ export const portfolioData = {
               url: "https://www.otis-zheng.com/",
             },
           ],
+        },
+        {
+          id: "blublu-exhibition-assistant",
+          title: "BluBlu",
+          logoStyle: "blublu",
+          showcaseImage: blubluShowcaseImage,
+          showcaseImageAlt: "BluBlu gallery exhibition installation",
+          role: "Exhibition Assistant",
+          location: "New York, NY",
+          description:
+            "Supported gallery installations, artwork transportation, and exhibition operations for artists, galleries, and clients.",
+          highlights: [
+            "Coordinated gallery installations and exhibition setups, including hanging paintings and preparing artwork for display.",
+            "Handled and transported fragile artwork, ensuring safe packing, delivery, installation, and teardown.",
+            "Managed exhibition logistics and artwork transportation between artists, galleries, and exhibition spaces.",
+            "Served as a liaison between artists, galleries, and clients to coordinate scheduling, installations, and operational needs.",
+            "Recruited and supported artists seeking O-1 visa services, connecting prospective clients with relevant resources and services.",
+          ],
+          media: [],
+          links: [],
+        },
+        {
+          id: "mercor-ai-model-trainer",
+          title: "Mercor",
+          logoStyle: "mercor",
+          showcaseImage: mercorShowcaseImage,
+          showcaseImageAlt: "Mercor AI platform illustration",
+          role: "AI Model Trainer (Music)",
+          location: "Remote",
+          timeframe: "2026 – Present",
+          description:
+            "Develop and evaluate expert music and audio tasks used to train and assess large language models.",
+          highlights: [
+            "Authored and reviewed music theory and technical audio evaluation tasks for AI model training and evaluation.",
+            "Evaluated AI-generated responses for accuracy in music theory, harmonic analysis, and spectrogram interpretation.",
+            "Wrote structured reference answers and annotations to improve large-language-model training data quality.",
+          ],
+          media: [],
+          links: [],
         },
         {
           id: "nyu-admin",
@@ -402,7 +472,30 @@ export const portfolioData = {
           description:
             "Moving-image and visual-design coursework spanning experimental cinema, communication systems, and computational filmmaking.",
           highlights: [
-            "ITPG-GT 2004 — Communications Lab: Hypercinema: Created experimental moving-image projects using video, sound, editing, animation, compositing, and nonlinear storytelling.",
+            {
+              text: "ITPG-GT 2004 — Communications Lab: Hypercinema: Created experimental moving-image projects using video, sound, editing, animation, compositing, and nonlinear storytelling.",
+              projectTitle: "Echoes of Remembrance",
+              media: [
+                {
+                  type: "embed",
+                  title: "Hypercinema project",
+                  src: "https://www.youtube.com/embed/dLZv34SskRo?start=73",
+                  height: 520,
+                },
+              ],
+              links: [
+                {
+                  label: "Mac Download",
+                  url: "/downloads/echoes-of-remembrance-mac.zip",
+                  download: true,
+                },
+                {
+                  label: "Windows Download",
+                  url: "/downloads/echoes-of-remembrance-windows.zip",
+                  download: true,
+                },
+              ],
+            },
             "ITPG-GT 2005 — Communications Lab: Visual Language: Applied composition, typography, color, hierarchy, visual systems, and graphic-design principles to interfaces and presentations.",
             "ITPG-GT 2379 — Algorithmic Filmmaking: Used code, procedural systems, generative processes, automation, and computational rules to create and edit moving-image work.",
           ],
@@ -414,10 +507,22 @@ export const portfolioData = {
           title: "3D Design, AR, and Virtual Environments",
           description:
             "Coursework in spatial design, augmented reality, real-time world-building, and performance in virtual spaces.",
+          models: nyu3dModels,
           highlights: [
             "ITPG-GT 2086 — CAD for Virtual and Reality: Created optimized 3D assets and environments using modeling, materials, lighting, cameras, spatial composition, and interactive implementation.",
             "ITPG-GT 2368 — Through the Lens: Modalities of AR: Explored augmented reality across phones, headsets, image markers, spatial tracking, interface design, and situated storytelling.",
-            "ITPG-GT 2379 — Expressive Environments: Building 3D Worlds: Designed real-time 3D environments through world-building, lighting, materials, spatial audio, interaction, narrative, and game-engine workflows.",
+            {
+              text: "ITPG-GT 2379 — Expressive Environments: Building 3D Worlds: Designed real-time 3D environments through world-building, lighting, materials, spatial audio, interaction, narrative, and game-engine workflows.",
+              media: [
+                {
+                  type: "embed",
+                  title: "Virtual Venue — Expressive Environments",
+                  src: "/virtualvenue/",
+                  height: 700,
+                  allow: "fullscreen; autoplay; gamepad",
+                },
+              ],
+            },
             "ITPG-GT 2999 — Performance in Virtual Space: Investigated live performance using avatars, motion, embodiment, spatial staging, digital scenography, and real-time interaction.",
           ],
           media: [],

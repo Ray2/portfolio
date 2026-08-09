@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# Unity WebGL export is deployed directly to S3 (the data file exceeds GitHub's limit).
+public/virtualvenue/
+
+# Downloadable desktop builds also exceed GitHub's per-file limit.
+public/downloads/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
