@@ -29,12 +29,12 @@ export default function MouseTrail({ theme }) {
         ? {
             primary: "58, 78, 112",
             secondary: "30, 44, 70",
-            opacity: 0.72,
+            opacity: 0.62,
           }
         : {
             primary: "158, 204, 234",
             secondary: "202, 228, 246",
-            opacity: 0.82,
+            opacity: 0.68,
           };
 
     const resizeCanvas = () => {

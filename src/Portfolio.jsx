@@ -48,6 +48,12 @@ export default function Portfolio() {
     };
   }, []);
   const [activeItemId, setActiveItemId] = useState(null);
+  const [footerAlbumId, setFooterAlbumId] = useState(
+    () =>
+      data.sections
+        .find((section) => section.title === "Music")
+        ?.items.find((item) => item.coverFlowStart)?.id || null
+  );
   const [canScrollDown, setCanScrollDown] = useState(false);
   const [activeNavSection, setActiveNavSection] = useState(
     data.sections[0]?.title || ""
@@ -67,6 +73,48 @@ export default function Portfolio() {
     const updateScrollState = () => {
       window.cancelAnimationFrame(animationFrame);
       animationFrame = window.requestAnimationFrame(() => {
+        const isMobile = window.matchMedia("(max-width: 900px)").matches;
+        const sidebar = document.querySelector(".sidebar");
+        const musicFooter = document.querySelector(".music-footer");
+        const scrollPosition = isMobile ? window.scrollY : content.scrollTop;
+        const scrollRange = isMobile
+          ? document.documentElement.scrollHeight - window.innerHeight
+          : content.scrollHeight - content.clientHeight;
+        const scrollProgress = Math.min(
+          1,
+          Math.max(0, scrollPosition / Math.max(1, scrollRange))
+        );
+        const indicatorRange = Math.max(
+          0,
+          ((isMobile ? sidebar?.clientWidth : sidebar?.clientHeight) || 46) -
+            48 -
+            (isMobile ? 0 : musicFooter?.offsetHeight || 0)
+        );
+        const rawIndicatorPosition = scrollProgress * indicatorRange;
+        const dividerDotSpacing = 8;
+        const indicatorStep = Math.min(
+          indicatorRange,
+          Math.floor(rawIndicatorPosition / dividerDotSpacing) *
+            dividerDotSpacing
+        );
+        const stepProgress =
+          (rawIndicatorPosition - indicatorStep) / dividerDotSpacing;
+        document.documentElement.style.setProperty(
+          "--portfolio-scroll-position",
+          `${indicatorStep}px`
+        );
+        const dotSizesAtCurrentStep = [1.2, 1.6, 2.6, 1.6, 1.2, 1];
+        const dotSizesAtNextStep = [1, 1.2, 1.6, 2.6, 1.6, 1.2];
+        dotSizesAtCurrentStep.forEach((size, index) => {
+          const interpolatedSize =
+            size +
+            (dotSizesAtNextStep[index] - size) * stepProgress;
+          document.documentElement.style.setProperty(
+            `--portfolio-dot-size-${index + 1}`,
+            `${interpolatedSize}px`
+          );
+        });
+
         const hasMoreBelow =
           content.scrollTop + content.clientHeight < content.scrollHeight - 4;
         setCanScrollDown(hasMoreBelow);
@@ -81,6 +129,10 @@ export default function Portfolio() {
           }
         });
 
+        if (!hasMoreBelow) {
+          currentSection = data.sections.at(-1)?.title || currentSection;
+        }
+
         setActiveNavSection(currentSection);
       });
     };
@@ -91,13 +143,21 @@ export default function Portfolio() {
       .querySelectorAll(".section")
       .forEach((section) => resizeObserver.observe(section));
     content.addEventListener("scroll", updateScrollState, { passive: true });
+    window.addEventListener("scroll", updateScrollState, { passive: true });
     window.addEventListener("resize", updateScrollState);
     updateScrollState();
 
     return () => {
       window.cancelAnimationFrame(animationFrame);
+      document.documentElement.style.removeProperty("--portfolio-scroll-position");
+      for (let index = 1; index <= 6; index += 1) {
+        document.documentElement.style.removeProperty(
+          `--portfolio-dot-size-${index}`
+        );
+      }
       resizeObserver.disconnect();
       content.removeEventListener("scroll", updateScrollState);
+      window.removeEventListener("scroll", updateScrollState);
       window.removeEventListener("resize", updateScrollState);
     };
   }, [data.sections]);
@@ -126,9 +186,17 @@ export default function Portfolio() {
   const musicSection = data.sections.find(
     (section) => section.title === "Music"
   );
+  const footerAlbum =
+    musicSection?.items.find((item) => item.id === footerAlbumId) ||
+    musicSection?.items[0];
   const handleSidebarMusicSelect = (itemId) => {
     setActiveItemId(itemId);
     window.requestAnimationFrame(() => navigateToSection("Music"));
+  };
+
+  const handleFooterMusicSelect = (itemId) => {
+    setActiveItemId(itemId);
+    setFooterAlbumId(itemId);
   };
 
   return (
@@ -206,18 +274,6 @@ export default function Portfolio() {
             <span>IMDb</span>
           </a>
         </div>
-        {musicSection && (
-          <section className="sidebar-music" aria-label="Music releases">
-            <MusicCoverFlow
-              items={musicSection.items}
-              isSectionOpen
-              activeItemId={activeItemId}
-              onSelect={handleSidebarMusicSelect}
-              compact
-              showDetails={false}
-            />
-          </section>
-        )}
       </aside>
       <div className="content-shell">
         <main className="content" ref={contentRef}>
@@ -226,7 +282,9 @@ export default function Portfolio() {
           return (
             <section
               key={section.title}
-              className="section section-open"
+              className={`section section-open${
+                section.title === "Music" ? " section-music" : ""
+              }`}
               ref={(element) => {
                 if (element) {
                   sectionRefs.current.set(section.title, element);
@@ -315,6 +373,22 @@ export default function Portfolio() {
           <ScrollDownIcon />
         </button>
       </div>
+      {musicSection && (
+        <footer className="music-footer" aria-label="Music releases">
+          <div className="music-footer-coverflow">
+            <MusicCoverFlow
+              items={musicSection.items}
+              isSectionOpen
+              activeItemId={footerAlbum?.id || activeItemId}
+              onSelect={handleFooterMusicSelect}
+              onNavigate={handleSidebarMusicSelect}
+              compact
+              showDetails={false}
+            />
+          </div>
+          <AlbumTrackBrowser album={footerAlbum} />
+        </footer>
+      )}
     </div>
   );
 }
@@ -518,14 +592,306 @@ function SketchCard({ item, isActive, onActivate }) {
   );
 }
 
+function AlbumTrackBrowser({ album, context = "footer" }) {
+  const audioRef = useRef(null);
+  const trackListRef = useRef(null);
+  const tracks = useMemo(
+    () => album?.media?.filter((media) => media.type === "audio") || [],
+    [album]
+  );
+  const [selectedTrackIndex, setSelectedTrackIndex] = useState(null);
+  const [durations, setDurations] = useState({});
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [volume, setVolume] = useState(1);
+  const [scrollbar, setScrollbar] = useState({
+    visible: false,
+    thumbHeight: 0,
+    thumbTop: 0,
+  });
+
+  const updateTrackScrollbar = () => {
+    const list = trackListRef.current;
+    if (!list) return;
+    const maxScroll = list.scrollHeight - list.clientHeight;
+    const visible = maxScroll > 1;
+    const thumbHeight = visible
+      ? Math.max(24, (list.clientHeight / list.scrollHeight) * list.clientHeight)
+      : 0;
+    const thumbTravel = Math.max(0, list.clientHeight - thumbHeight);
+    const thumbTop = visible ? (list.scrollTop / maxScroll) * thumbTravel : 0;
+    setScrollbar({ visible, thumbHeight, thumbTop });
+  };
+
+  useEffect(() => {
+    const list = trackListRef.current;
+    if (!list) return undefined;
+    const frame = window.requestAnimationFrame(updateTrackScrollbar);
+    const observer = new ResizeObserver(updateTrackScrollbar);
+    observer.observe(list);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, [tracks.length]);
+
+  const startScrollbarDrag = (event) => {
+    const list = trackListRef.current;
+    if (!list) return;
+    event.preventDefault();
+    const startY = event.clientY;
+    const startScrollTop = list.scrollTop;
+    const scrollTravel = list.scrollHeight - list.clientHeight;
+    const thumbTravel = list.clientHeight - scrollbar.thumbHeight;
+
+    const handlePointerMove = (moveEvent) => {
+      if (thumbTravel <= 0) return;
+      list.scrollTop =
+        startScrollTop +
+        ((moveEvent.clientY - startY) / thumbTravel) * scrollTravel;
+    };
+    const finishDrag = () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", finishDrag);
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", finishDrag, { once: true });
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    const probes = new Set();
+    setSelectedTrackIndex(null);
+    setDurations({});
+    setIsPlaying(false);
+    setCurrentTime(0);
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.removeAttribute("src");
+      audioRef.current.load();
+    }
+
+    const readDuration = (track, index) =>
+      new Promise((resolve) => {
+        const probe = new Audio();
+        probes.add(probe);
+        probe.preload = "metadata";
+        const finish = (duration) => {
+          probes.delete(probe);
+          probe.removeAttribute("src");
+          if (!cancelled && Number.isFinite(duration)) {
+            setDurations((current) => ({ ...current, [index]: duration }));
+          }
+          resolve();
+        };
+        probe.addEventListener("loadedmetadata", () => finish(probe.duration), {
+          once: true,
+        });
+        probe.addEventListener("error", () => finish(null), { once: true });
+        probe.src = track.src;
+      });
+
+    const workers = Array.from({ length: Math.min(4, tracks.length) }, (_, worker) =>
+      (async () => {
+        for (let index = worker; index < tracks.length; index += 4) {
+          if (cancelled) return;
+          await readDuration(tracks[index], index);
+        }
+      })()
+    );
+    Promise.all(workers).catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+      probes.forEach((probe) => {
+        probe.removeAttribute("src");
+        probe.load();
+      });
+      probes.clear();
+    };
+  }, [tracks]);
+
+  const playTrack = (index) => {
+    const audio = audioRef.current;
+    if (!audio || !tracks[index]) return;
+
+    if (selectedTrackIndex !== index) {
+      audio.src = tracks[index].src;
+      setSelectedTrackIndex(index);
+    }
+    audio.play().catch(() => undefined);
+  };
+
+  const togglePlayback = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (selectedTrackIndex === null) {
+      if (tracks.length > 0) playTrack(0);
+      return;
+    }
+    if (audio.paused) audio.play().catch(() => undefined);
+    else audio.pause();
+  };
+
+  const playNextTrack = () => {
+    if (selectedTrackIndex === null || tracks.length === 0) return;
+    playTrack((selectedTrackIndex + 1) % tracks.length);
+  };
+
+  return (
+    <section
+      className={`album-track-browser ${context}-track-browser`}
+      aria-label="Album tracks"
+    >
+      <header className="track-browser-titlebar">
+        <span className="track-browser-folder" aria-hidden="true" />
+        <strong>{album?.title || "Select an album"}</strong>
+        <span>{tracks.length ? `${tracks.length} tracks` : "No local tracks"}</span>
+      </header>
+      <div className="track-browser-columns" aria-hidden="true">
+        <span>#</span>
+        <span>Name</span>
+        <span>Time</span>
+      </div>
+      <div className="track-browser-scroll-area">
+        <div
+          className="track-browser-list"
+          ref={trackListRef}
+          onScroll={updateTrackScrollbar}
+        >
+          {tracks.length > 0 ? (
+            tracks.map((track, index) => (
+              <button
+                type="button"
+                className={`track-browser-row${
+                  selectedTrackIndex === index ? " is-playing" : ""
+                }`}
+                key={track.src}
+                onClick={() => playTrack(index)}
+              >
+                <span>{selectedTrackIndex === index ? "▶" : index + 1}</span>
+                <span title={track.title}>{track.title}</span>
+                <span>{formatTrackDuration(durations[index])}</span>
+              </button>
+            ))
+          ) : (
+            <p className="track-browser-empty">
+              Select a streamed album to browse its files.
+            </p>
+          )}
+        </div>
+        {scrollbar.visible && (
+          <div className="track-browser-scrollbar" aria-hidden="true">
+            <span
+              className="track-browser-scroll-thumb"
+              style={{
+                height: `${scrollbar.thumbHeight}px`,
+                transform: `translateY(${scrollbar.thumbTop}px)`,
+              }}
+              onPointerDown={startScrollbarDrag}
+            />
+          </div>
+        )}
+      </div>
+      <div className="footer-playback-controls" aria-label="Playback controls">
+        <button
+          type="button"
+          className="footer-play-button"
+          aria-label={isPlaying ? "Pause track" : "Play track"}
+          onClick={togglePlayback}
+        >
+          {isPlaying ? "Ⅱ" : "▶"}
+        </button>
+        <div className="footer-seek-control">
+          <input
+            type="range"
+            min="0"
+            max={
+              selectedTrackIndex === null
+                ? 0
+                : durations[selectedTrackIndex] || 0
+            }
+            step="0.1"
+            value={currentTime}
+            aria-label="Track position"
+            onChange={(event) => {
+              const nextTime = Number(event.target.value);
+              setCurrentTime(nextTime);
+              if (audioRef.current) audioRef.current.currentTime = nextTime;
+            }}
+          />
+          <span>
+            {formatTrackDuration(currentTime)} / {" "}
+            {formatTrackDuration(
+              selectedTrackIndex === null
+                ? null
+                : durations[selectedTrackIndex]
+            )}
+          </span>
+        </div>
+        <label className="footer-volume-control">
+          <span aria-hidden="true">VOL</span>
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.02"
+            value={volume}
+            aria-label="Volume"
+            onChange={(event) => {
+              const nextVolume = Number(event.target.value);
+              setVolume(nextVolume);
+              if (audioRef.current) audioRef.current.volume = nextVolume;
+            }}
+          />
+        </label>
+      </div>
+      <audio
+        ref={audioRef}
+        className="track-browser-player"
+        controls
+        preload="metadata"
+        onEnded={playNextTrack}
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+        onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
+        onLoadedMetadata={(event) => {
+          const duration = event.currentTarget.duration;
+
+          if (selectedTrackIndex !== null && Number.isFinite(duration)) {
+            setDurations((current) => ({
+              ...current,
+              [selectedTrackIndex]: duration,
+            }));
+          }
+        }}
+      />
+    </section>
+  );
+}
+
+function formatTrackDuration(duration) {
+  if (!Number.isFinite(duration)) return "--:--";
+  const minutes = Math.floor(duration / 60);
+  const seconds = Math.floor(duration % 60)
+    .toString()
+    .padStart(2, "0");
+  return `${minutes}:${seconds}`;
+}
+
 function MusicCoverFlow({
   items,
   isSectionOpen,
   activeItemId,
   onSelect,
+  onNavigate,
   compact = false,
   showDetails: renderDetails = true,
 }) {
+  const loopGroupCount = 21;
+  const middleLoopGroup = Math.floor(loopGroupCount / 2);
   const displayItems = useMemo(() => {
     const featuredIndex = items.findIndex((item) => item.coverFlowStart);
     if (featuredIndex < 0 || items.length < 2) return items;
@@ -539,6 +905,18 @@ function MusicCoverFlow({
       (_, index) => items[(firstIndex + index) % items.length]
     );
   }, [items]);
+  const loopedItems = useMemo(
+    () =>
+      displayItems.length > 1
+        ? Array.from({ length: displayItems.length * loopGroupCount }, (_, index) => ({
+            item: displayItems[index % displayItems.length],
+            loopKey: `${Math.floor(index / displayItems.length)}-${
+              displayItems[index % displayItems.length].id
+            }`,
+          }))
+        : displayItems.map((item) => ({ item, loopKey: item.id })),
+    [displayItems, loopGroupCount]
+  );
   const trackRef = useRef(null);
   const layoutFrameRef = useRef(0);
   const scrollEndTimerRef = useRef(0);
@@ -548,7 +926,10 @@ function MusicCoverFlow({
       (item) => item.id === activeItemId
     );
     const initialIndex =
-      activeIndex >= 0 ? activeIndex : Math.floor(displayItems.length / 2);
+      (displayItems.length > 1
+        ? displayItems.length * middleLoopGroup
+        : 0) +
+      (activeIndex >= 0 ? activeIndex : Math.floor(displayItems.length / 2));
     selectedIndexRef.current = initialIndex;
     return initialIndex;
   });
@@ -558,12 +939,25 @@ function MusicCoverFlow({
       (item) => item.id === activeItemId
     );
     if (activeIndex >= 0) {
-      selectedIndexRef.current = activeIndex;
-      setSelectedIndex(activeIndex);
+      const loopedIndex =
+        displayItems.length > 1
+          ? Array.from(
+              { length: loopGroupCount },
+              (_, groupIndex) => groupIndex * displayItems.length + activeIndex
+            )
+              .reduce((closest, candidate) =>
+                Math.abs(candidate - selectedIndexRef.current) <
+                Math.abs(closest - selectedIndexRef.current)
+                  ? candidate
+                  : closest
+              )
+          : activeIndex;
+      selectedIndexRef.current = loopedIndex;
+      setSelectedIndex(loopedIndex);
       const animationFrame = window.requestAnimationFrame(() => {
         const track = trackRef.current;
         const cover = track?.querySelector(
-          `[data-cover-index="${activeIndex}"]`
+          `[data-cover-index="${loopedIndex}"]`
         );
         if (!track || !cover) return;
         const targetLeft =
@@ -603,7 +997,7 @@ function MusicCoverFlow({
       window.clearTimeout(scrollEndTimerRef.current);
       document.documentElement.classList.remove("coverflow-scrolling");
     };
-  }, [isSectionOpen, displayItems.length]);
+  }, [isSectionOpen, loopedItems.length]);
 
   const centerCover = (index, behavior = "smooth") => {
     const track = trackRef.current;
@@ -621,13 +1015,17 @@ function MusicCoverFlow({
     selectedIndexRef.current = index;
     setSelectedIndex(index);
     centerCover(index);
-    onSelect(displayItems[index].id);
+    onSelect(loopedItems[index].item.id);
+  };
+
+  const navigateFromCover = (event, index) => {
+    event.preventDefault();
+    chooseCover(index);
+    onNavigate?.(loopedItems[index].item.id);
   };
 
   const stepCover = (direction) => {
-    const nextIndex =
-      (selectedIndexRef.current + direction + displayItems.length) %
-      displayItems.length;
+    const nextIndex = selectedIndexRef.current + direction;
     chooseCover(nextIndex);
   };
 
@@ -651,7 +1049,7 @@ function MusicCoverFlow({
     });
   };
 
-  const selectedItem = displayItems[selectedIndex];
+  const selectedItem = loopedItems[selectedIndex]?.item;
   const isDetailsOpen = selectedItem?.id === activeItemId;
 
   return (
@@ -676,7 +1074,7 @@ function MusicCoverFlow({
           ref={trackRef}
           onScroll={handleTrackScroll}
         >
-          {displayItems.map((item, index) => {
+          {loopedItems.map(({ item, loopKey }, index) => {
             const position =
               index === selectedIndex
                 ? "is-selected"
@@ -689,15 +1087,21 @@ function MusicCoverFlow({
                 type="button"
                 className={`coverflow-card ${position}`}
                 data-cover-index={index}
-                key={item.id}
-                aria-pressed={item.id === activeItemId}
+                key={loopKey}
+                aria-pressed={index === selectedIndex}
                 tabIndex={isSectionOpen ? 0 : -1}
                 onClick={() => chooseCover(index)}
+                onContextMenu={(event) => navigateFromCover(event, index)}
               >
                 <span
                   className={`coverflow-art${
                     item.coverStyle ? ` coverflow-art-${item.coverStyle}` : ""
                   }`}
+                  style={
+                    item.coverHue === undefined
+                      ? undefined
+                      : { "--album-hue": item.coverHue }
+                  }
                 >
                   {item.cover ? (
                     <img src={item.cover} alt={`${item.title} cover`} />
@@ -727,7 +1131,8 @@ function MusicCoverFlow({
       </div>
       {renderDetails && isDetailsOpen && (
         <div className="music-flow-details">
-          <ItemDetails item={selectedItem} />
+          <AlbumTrackBrowser album={selectedItem} context="section" />
+          <ItemDetails item={selectedItem} excludeMediaTypes={["audio"]} />
         </div>
       )}
     </div>
@@ -895,6 +1300,10 @@ function PortfolioListItem({
 
 function ResumeShowcaseVisual({ item }) {
   if (item.showcaseEmbed) {
+    if (item.showcaseDesktopViewport) {
+      return <DesktopShowcaseEmbed item={item} />;
+    }
+
     return (
       <span
         className={`resume-showcase-visual resume-showcase-embed${
@@ -907,11 +1316,15 @@ function ResumeShowcaseVisual({ item }) {
         }
       >
         <iframe
-          src={item.showcaseEmbed}
+          src={
+            item.showcaseEmbedFit === "page"
+              ? `${item.showcaseEmbed}#page=1&zoom=page-fit`
+              : item.showcaseEmbed
+          }
           title={item.showcaseEmbedTitle || `${item.title} preview`}
           loading="lazy"
           scrolling={item.logoStyle === "tmlne" ? "yes" : undefined}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allow={`accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share${item.showcasePermissions ? `; ${item.showcasePermissions}` : ""}`}
           allowFullScreen
         />
       </span>
@@ -969,6 +1382,45 @@ function ResumeShowcaseVisual({ item }) {
       className={`resume-showcase-visual resume-showcase-logo resume-showcase-logo-${item.logoStyle}`}
     >
       <img src={logo} alt="" aria-hidden="true" />
+    </span>
+  );
+}
+
+function DesktopShowcaseEmbed({ item }) {
+  const frameRef = useRef(null);
+
+  useEffect(() => {
+    const frame = frameRef.current;
+    if (!frame) return undefined;
+
+    const updateScale = () => {
+      frame.style.setProperty(
+        "--desktop-preview-scale",
+        `${frame.clientWidth / 1920}`
+      );
+    };
+    const resizeObserver = new ResizeObserver(updateScale);
+
+    resizeObserver.observe(frame);
+    updateScale();
+
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  return (
+    <span
+      ref={frameRef}
+      className="resume-showcase-visual resume-showcase-embed resume-showcase-embed-widescreen resume-showcase-desktop-window"
+      style={{ "--showcase-aspect-ratio": item.showcaseAspectRatio || "16 / 9" }}
+    >
+      <iframe
+        src={item.showcaseEmbed}
+        title={item.showcaseEmbedTitle || `${item.title} preview`}
+        loading="lazy"
+        scrolling={item.logoStyle === "tmlne" ? "yes" : undefined}
+        allow={`accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share${item.showcasePermissions ? `; ${item.showcasePermissions}` : ""}`}
+        allowFullScreen
+      />
     </span>
   );
 }
@@ -1065,11 +1517,16 @@ function ProjectTitle({ item }) {
   return item.title;
 }
 
-function ItemDetails({ item }) {
+function ItemDetails({ item, excludeMediaTypes = [] }) {
   const description =
     item.description || "Add a description for this item by editing the data.";
+  const showDescription = !/^\d+ streamed tracks?\.$/i.test(description.trim());
   const hasLinks = Array.isArray(item.links) && item.links.length > 0;
-  const hasMedia = Array.isArray(item.media) && item.media.length > 0;
+  const media = Array.isArray(item.media)
+    ? item.media.filter((entry) => !excludeMediaTypes.includes(entry.type))
+    : [];
+  const hasAnyMedia = Array.isArray(item.media) && item.media.length > 0;
+  const hasMedia = media.length > 0;
   const hasHighlights = Array.isArray(item.highlights) && item.highlights.length > 0;
   const hasCourseGroups =
     Array.isArray(item.courseGroups) && item.courseGroups.length > 0;
@@ -1081,7 +1538,7 @@ function ItemDetails({ item }) {
       )}
       {hasMedia && (
         <div className="media-grid">
-          {item.media.map((media, index) => (
+          {media.map((media, index) => (
             <MediaBlock
               key={`${item.id}-${media.type}-${media.uniqueId || media.src || index}`}
               media={media}
@@ -1089,7 +1546,7 @@ function ItemDetails({ item }) {
           ))}
         </div>
       )}
-      <p className="item-description">{description}</p>
+      {showDescription && <p className="item-description">{description}</p>}
       {hasCourseGroups && <CourseGroups groups={item.courseGroups} />}
       {hasHighlights && (
         <ul className="item-highlights">
@@ -1113,7 +1570,7 @@ function ItemDetails({ item }) {
           ))}
         </div>
       )}
-      {!hasMedia && !hasHighlights && !hasCourseGroups ? (
+      {!hasAnyMedia && !hasHighlights && !hasCourseGroups ? (
         <p className="item-details-placeholder">
           Add photos, videos, or embeds by inserting entries into this item's
           media array.
@@ -1644,7 +2101,7 @@ function MediaBlock({ media }) {
           }}
           allow={media.allow || "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"}
           loading="lazy"
-          allowFullScreen
+          allowFullScreen={!media.allow?.includes("fullscreen")}
         />
       </div>
     );
@@ -1664,7 +2121,7 @@ function MediaBlock({ media }) {
           "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         }
         loading="lazy"
-        allowFullScreen
+        allowFullScreen={!media.allow?.includes("fullscreen")}
       />
       {media.caption && (
         <p className="media-caption">{media.caption}</p>
@@ -1729,13 +2186,13 @@ a,button,[role="button"],summary{cursor:url("${xpPointer}") 7 1,pointer}
 
 /* Layout */
 .container{display:grid;grid-template-columns:minmax(260px,.78fr) minmax(0,2.22fr);width:100%;height:100vh;height:100dvh;min-height:0;overflow:hidden}
-.sidebar{position:relative;z-index:2;height:100%;padding:1.25rem;border-right:1px solid rgba(70,105,130,.18);background-color:rgba(233,245,255,.86);isolation:isolate;overflow:hidden}
+.sidebar{position:relative;z-index:2;height:100%;padding:2rem 1.25rem 1.25rem;border:0;background:transparent;isolation:isolate;overflow:hidden}
+.sidebar::after{content:"";position:absolute;z-index:3;top:0;right:0;bottom:0;width:10px;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='8' viewBox='0 0 10 8'%3E%3Ccircle cx='5' cy='4' r='1' fill='%23566b7a' fill-opacity='.42'/%3E%3C/svg%3E");background-position:center top;background-repeat:repeat-y}
+.sidebar::before{content:"";position:absolute;z-index:4;top:var(--portfolio-scroll-position,0px);right:0;width:10px;height:48px;background:radial-gradient(circle at 50% 4px,#566b7a 0 var(--portfolio-dot-size-1,1.2px),transparent calc(var(--portfolio-dot-size-1,1.2px) + .2px)),radial-gradient(circle at 50% 12px,#566b7a 0 var(--portfolio-dot-size-2,1.6px),transparent calc(var(--portfolio-dot-size-2,1.6px) + .2px)),radial-gradient(circle at 50% 20px,#566b7a 0 var(--portfolio-dot-size-3,2.6px),transparent calc(var(--portfolio-dot-size-3,2.6px) + .2px)),radial-gradient(circle at 50% 28px,#566b7a 0 var(--portfolio-dot-size-4,1.6px),transparent calc(var(--portfolio-dot-size-4,1.6px) + .2px)),radial-gradient(circle at 50% 36px,#566b7a 0 var(--portfolio-dot-size-5,1.2px),transparent calc(var(--portfolio-dot-size-5,1.2px) + .2px)),radial-gradient(circle at 50% 44px,#566b7a 0 var(--portfolio-dot-size-6,1px),transparent calc(var(--portfolio-dot-size-6,1px) + .2px));pointer-events:none}
 .content-shell{position:relative;min-width:0;height:100%;overflow:hidden}
-.content{min-width:0;height:100%;padding:2rem;background:none;overflow-x:hidden;overflow-y:scroll;overflow-anchor:none;overscroll-behavior:contain;scrollbar-gutter:stable}
-.content{scrollbar-width:thin;scrollbar-color:rgba(85,105,130,.65) rgba(85,105,130,.12)}
-.content::-webkit-scrollbar{width:9px}
-.content::-webkit-scrollbar-track{background:rgba(85,105,130,.12)}
-.content::-webkit-scrollbar-thumb{border:2px solid transparent;border-radius:999px;background:rgba(85,105,130,.62);background-clip:padding-box}
+.content{min-width:0;height:100%;padding:2rem 4.5rem 17rem 2rem;background:none;overflow-x:hidden;overflow-y:scroll;overflow-anchor:none;overscroll-behavior:contain;scrollbar-gutter:stable}
+.content{scrollbar-width:none}
+.content::-webkit-scrollbar{display:none}
 .resume-scroll-cue{position:absolute;z-index:20;left:50%;bottom:1rem;display:grid;width:42px;height:42px;padding:0;place-items:center;border:1px solid rgba(17,17,17,.2);border-radius:50%;background:rgba(207,213,219,.94);box-shadow:0 5px 18px rgba(20,35,55,.2);color:#111;opacity:0;pointer-events:none;transform:translate(-50%,12px);transition:opacity .2s ease,transform .2s ease,background-color .2s ease}
 .resume-scroll-cue.is-visible{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
 .resume-scroll-cue.is-visible:hover{background:#e6eaee;transform:translate(-50%,-2px)}
@@ -1746,15 +2203,15 @@ a,button,[role="button"],summary{cursor:url("${xpPointer}") 7 1,pointer}
 .section-jump-line{display:block;width:24px;height:2px;border-radius:999px;background:currentColor;opacity:.48;transition:width .18s ease,opacity .18s ease,transform .18s ease}
 .section-jump-button:hover .section-jump-line,
 .section-jump-button:focus-visible .section-jump-line{width:34px;opacity:.85}
-.section-jump-button.is-current .section-jump-line{width:32px;height:3px;opacity:1}
+.section-jump-button.is-current .section-jump-line{width:32px;height:3px;background:#e53935;opacity:1}
 .section-jump-button:focus-visible{outline:2px solid rgba(60,118,255,.65);outline-offset:2px;border-radius:4px}
 .section-jump-label{position:absolute;top:50%;right:54px;padding:.34rem .6rem;border-radius:6px;background:rgba(235,243,248,.94);box-shadow:0 3px 14px rgba(20,35,55,.14);font-family:'Syne',sans-serif;font-size:1.65rem;font-weight:700;line-height:1;white-space:nowrap;opacity:0;pointer-events:none;transform:translate(5px,-50%);transition:opacity .15s ease,transform .15s ease}
 .section-jump-button:hover .section-jump-label,
 .section-jump-button:focus-visible .section-jump-label{opacity:1;transform:translate(0,-50%)}
 
 /* Typography */
-.name{display:flex;align-items:center;gap:.55rem;font-size:2rem;margin:0 0 1rem}
-.online-status{display:inline-block;width:11px;height:11px;flex:0 0 auto;border:2px solid #26323a;border-radius:50%;background:#31a24c}
+.name{display:flex;align-items:center;gap:.55rem;margin:0 0 1rem;font-size:2rem;line-height:1.2}
+.online-status{display:inline-block;width:11px;height:11px;flex:0 0 auto;border:0;border-radius:50%;background:#31a24c}
 .profile-image{width:min(100%,220px,28vh);margin:0 0 1rem}
 .headshot-image{display:block;width:100%;height:auto}
 .bio{color:#444;margin:0;white-space:pre-line}
@@ -1765,10 +2222,58 @@ a,button,[role="button"],summary{cursor:url("${xpPointer}") 7 1,pointer}
 .sidebar-contact a{display:inline-flex;align-items:center;gap:.45rem;color:#333;font-size:.9rem;text-decoration:none}
 .contact-icon{width:17px;height:17px;flex:0 0 auto}
 .sidebar-contact a:hover{color:#777;text-decoration:underline}
-.sidebar-music{min-width:0;margin-top:.55rem}
+.music-footer{position:fixed;z-index:30;right:0;bottom:0;left:0;display:grid;width:100%;height:176px;box-sizing:border-box;grid-template-columns:minmax(300px,38%) minmax(0,1fr);grid-template-rows:minmax(0,1fr);padding-bottom:env(safe-area-inset-bottom);overflow:hidden;border-top:1px solid rgba(70,105,130,.18);background:rgba(233,245,255,.62);backdrop-filter:blur(14px)}
+.music-footer-coverflow{min-width:0;min-height:0;overflow:hidden;padding-left:200px;border-right:1px dotted rgba(70,105,130,.4)}
+.music-footer>.footer-track-browser{min-height:0;max-height:100%;overflow:hidden}
+.music-footer .music-flow-shell.is-compact.is-open{height:176px;max-height:176px}
+.music-footer .music-flow-shell.is-compact .music-coverflow,
+.music-footer .music-flow-shell.is-compact .coverflow-track{height:176px;min-height:176px}
+.music-footer .music-flow-shell.is-compact .coverflow-track{padding:25px calc(50% - 41px)}
+.music-footer .music-flow-shell.is-compact .coverflow-card{flex-basis:82px}
+.music-footer .music-flow-shell.is-compact .coverflow-arrow-left{left:max(12px,calc(50% - 210px))}
+.music-footer .music-flow-shell.is-compact .coverflow-arrow-right{right:max(12px,calc(50% - 210px))}
+.album-track-browser{display:grid;min-width:0;height:100%;box-sizing:border-box;grid-template-rows:auto auto minmax(0,1fr);padding:.45rem .55rem .5rem;background:rgba(220,238,252,.34);color:#20384d;font:12px/1.2 Tahoma,'Segoe UI',sans-serif}
+.track-browser-titlebar{display:grid;grid-template-columns:18px minmax(0,1fr) auto;align-items:center;gap:.4rem;min-height:29px;padding:.25rem .45rem;border:1px solid;border-color:#fff #6687a5 #6687a5 #fff;background:linear-gradient(90deg,#5f91d4,#87b9ea);color:#fff;text-shadow:1px 1px #335b8a}
+.track-browser-titlebar strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.76rem}
+.track-browser-titlebar>span:last-child{font-size:.65rem;white-space:nowrap}
+.track-browser-folder{position:relative;width:15px;height:11px;border:1px solid #315b83;background:#f1ca58;box-shadow:inset 1px 1px rgba(255,255,255,.75)}
+.track-browser-folder::before{content:"";position:absolute;top:-4px;left:1px;width:7px;height:4px;border:1px solid #315b83;border-bottom:0;background:#f5d879}
+.track-browser-columns{display:grid;grid-template-columns:34px minmax(0,1fr) 58px;border-right:1px solid #8aa8c2;border-bottom:1px solid #8aa8c2;border-left:1px solid #fff;background:#e8f2fa;color:#496176}
+.track-browser-columns span{padding:.22rem .4rem;border-right:1px solid #b5cada}
+.track-browser-columns span:last-child{border-right:0;text-align:right}
+.track-browser-scroll-area{position:relative;min-height:0;overflow:hidden;border-right:1px solid #8aa8c2;border-bottom:1px solid #8aa8c2;border-left:1px solid #fff;background:rgba(255,255,255,.68)}
+.track-browser-list{height:100%;min-height:0;margin-right:14px;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.track-browser-list::-webkit-scrollbar{display:none}
+.track-browser-scrollbar{position:absolute;z-index:3;top:0;right:0;bottom:0;width:14px;border-left:1px solid #8aa8c2;background:repeating-linear-gradient(135deg,#eaf4fb 0 2px,#d5e7f4 2px 4px);box-shadow:inset 1px 0 #fff}
+.track-browser-scroll-thumb{position:absolute;top:0;right:0;left:0;display:block;min-height:24px;box-sizing:border-box;border:2px solid;border-color:#dceeff #3f6483 #3f6483 #dceeff;border-radius:0;background:linear-gradient(90deg,#a9cae3,#7099ba 55%,#98bad4);cursor:ns-resize;touch-action:none}
+.track-browser-scroll-thumb:hover{background:linear-gradient(90deg,#c2ddf0,#7da8ca 55%,#aacbe2)}
+.track-browser-row{display:grid;width:100%;grid-template-columns:34px minmax(0,1fr) 58px;padding:0;border:0;border-bottom:1px dotted rgba(74,102,126,.24);background:transparent;color:#263f54;font:inherit;text-align:left}
+.track-browser-row>span{min-width:0;padding:.3rem .4rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.track-browser-row>span:first-child{color:#63809a;text-align:center}
+.track-browser-row>span:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.track-browser-row:hover{background:#d9ebf9}
+.track-browser-row.is-playing{background:#316ac5;color:#fff}
+.track-browser-row.is-playing>span{color:inherit}
+.track-browser-row:focus-visible{position:relative;z-index:1;outline:2px solid #1f4e8c;outline-offset:-2px}
+.track-browser-empty{margin:0;padding:1rem;color:#60788d;text-align:center}
+.track-browser-player{display:none}
+.section-track-browser{position:relative;height:clamp(270px,42vh,390px);margin:.35rem 0 .8rem;padding:.6rem;background:rgba(220,238,252,.54);border:2px solid;border-color:#fff #6687a5 #6687a5 #fff;box-shadow:1px 1px 0 rgba(39,73,101,.7)}
+.section-track-browser .footer-playback-controls{position:static;width:100%;grid-template-columns:42px minmax(120px,1fr) minmax(110px,.45fr);align-items:center;transform:none;margin-top:.45rem;box-sizing:border-box}
+.section-track-browser .footer-play-button{grid-row:auto}
+.footer-playback-controls{position:absolute;z-index:40;top:50%;left:10px;display:grid;width:178px;grid-template-columns:42px minmax(0,1fr);gap:.45rem;padding:.55rem;border:2px solid;border-color:#fff #486a8b #486a8b #fff;background:linear-gradient(135deg,rgba(235,247,255,.96),rgba(166,203,233,.94));box-shadow:1px 1px 0 #274965;transform:translateY(-50%);font:10px/1.15 Tahoma,'Segoe UI',sans-serif;color:#294d6b}
+.footer-play-button{grid-row:1 / span 2;display:grid;width:42px;height:42px;padding:0;align-self:center;place-items:center;border:2px solid;border-color:#fff #486a8b #486a8b #fff;border-radius:0;background:linear-gradient(135deg,#eaf5ff,#8fb4d4);color:#294d6b;font:700 1rem Tahoma,'Segoe UI',sans-serif}
+.footer-play-button:active{border-color:#486a8b #fff #fff #486a8b;background:#9dbed8}
+.footer-play-button:focus-visible{outline:2px solid #1f4e8c;outline-offset:2px}
+.footer-seek-control{display:grid;min-width:0;gap:.16rem}
+.footer-seek-control input,.footer-volume-control input{width:100%;height:12px;margin:0;accent-color:#316ac5}
+.footer-seek-control span{font-variant-numeric:tabular-nums;white-space:nowrap}
+.footer-volume-control{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:.3rem}
+.footer-volume-control span{font-size:8px;font-weight:700}
 .section{margin-bottom:.1rem}
 .section.section-open{margin-bottom:.65rem}
-.section-title{font-size:2rem;margin:0}
+.section-music{margin-top:1.25rem;border:0}
+.section-title{position:relative;margin:0 0 1rem;padding-bottom:1rem;font-size:2rem}
+.section-title::after{content:"";position:absolute;right:0;bottom:-5px;left:0;height:10px;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='10' viewBox='0 0 48 10'%3E%3Cg fill='%23566b7a' fill-opacity='.42'%3E%3Ccircle cx='2' cy='5' r='1'/%3E%3Ccircle cx='8' cy='3' r='1'/%3E%3Ccircle cx='14' cy='2' r='1'/%3E%3Ccircle cx='20' cy='3' r='1'/%3E%3Ccircle cx='26' cy='5' r='1'/%3E%3Ccircle cx='32' cy='7' r='1'/%3E%3Ccircle cx='38' cy='8' r='1'/%3E%3Ccircle cx='44' cy='7' r='1'/%3E%3C/g%3E%3C/svg%3E");background-position:left center;background-repeat:repeat-x}
 .section-toggle{width:100%;padding:.35rem 0;border:0;background:none;display:flex;align-items:center;justify-content:flex-start;gap:.45rem;font:inherit;color:#111;cursor:pointer;transition:color .15s ease}
 .section-chevron{display:inline-grid;width:1.1em;height:1.1em;flex:0 0 auto;place-items:center;font-family:Arial,sans-serif;font-size:.72em;font-weight:400;line-height:1;transform:rotate(0deg);transform-origin:center;transition:transform .2s ease}
 .section-toggle.open .section-chevron{transform:rotate(90deg)}
@@ -1823,26 +2328,33 @@ a,button,[role="button"],summary{cursor:url("${xpPointer}") 7 1,pointer}
 .coverflow-art-singles .coverflow-generated-cover{color:#fff}
 .coverflow-art-prod{background:repeating-linear-gradient(90deg,rgba(255,255,255,.06) 0 1px,transparent 1px 9px),linear-gradient(160deg,#162222,#315f53 55%,#d0b669)}
 .coverflow-art-prod .coverflow-generated-cover{color:#f1e5bf}
-.coverflow-title{display:block;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
-.coverflow-arrow{position:absolute;z-index:50;top:50%;translate:0 -50%;display:grid;width:38px;height:54px;padding:0;border:1px solid rgba(255,255,255,.22);border-radius:999px;place-items:center;background:rgba(0,0,0,.72);color:#fff;cursor:pointer;transition:background .15s ease,transform .15s ease}
+.coverflow-art-local-album{background:radial-gradient(circle at 72% 24%,hsla(var(--album-hue),92%,82%,.9) 0 5%,transparent 5.5%),repeating-linear-gradient(135deg,hsla(var(--album-hue),80%,90%,.08) 0 1px,transparent 1px 10px),linear-gradient(150deg,hsl(var(--album-hue),58%,58%),hsl(calc(var(--album-hue) + 48),48%,24%))}
+.coverflow-art-local-album .coverflow-generated-cover{color:#fff;text-shadow:0 1px 12px rgba(0,0,0,.32)}
+.coverflow-title{display:block;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;opacity:0;visibility:hidden;transition:opacity .18s ease}
+.coverflow-card.is-selected .coverflow-title{opacity:1;visibility:visible}
+.coverflow-arrow{position:absolute;z-index:50;top:50%;translate:0 -50%;display:grid;width:38px;height:54px;padding:0;border:2px solid;border-color:#fff #486a8b #486a8b #fff;border-radius:0;place-items:center;background:linear-gradient(135deg,#eaf5ff 0,#b8d5ee 48%,#8fb4d4 100%);color:#294d6b;box-shadow:1px 1px 0 #274965,-1px -1px 0 #cce3f5;cursor:pointer;transition:background .15s ease,transform .15s ease}
 .coverflow-chevron{position:absolute;top:50%;left:50%;display:block;width:12px;height:20px;transform:translate(-50%,-50%);overflow:visible}
-.coverflow-arrow:hover{background:rgba(0,0,0,.82);transform:scale(1.06)}
-.coverflow-arrow:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.coverflow-arrow:hover{background:linear-gradient(135deg,#fff 0,#cbe5f8 48%,#9fc5e3 100%);transform:scale(1.04)}
+.coverflow-arrow:active{border-color:#486a8b #fff #fff #486a8b;background:linear-gradient(135deg,#87aac8,#bdd8ed);box-shadow:inset 1px 1px 1px rgba(31,65,92,.35)}
+.coverflow-arrow:focus-visible{outline:2px solid #294d6b;outline-offset:3px}
 .coverflow-arrow-left{left:10px}
 .coverflow-arrow-right{right:10px}
 .music-flow-details{padding:.25rem .1rem 0}
 .item{padding:.25rem 0}
 .item-branded{padding:.4rem 0}
 .item-button{width:100%;padding:0;border:0;margin:0;background:none;text-align:left;font-size:1.05rem;display:flex;flex-direction:column;gap:.25rem;cursor:pointer;transition:color .15s ease;color:#111;font-family:'Syne', sans-serif}
-.item-showcase{padding:0;border-bottom:1px solid rgba(17,17,17,.16)}
-.item-showcase:first-child{border-top:1px solid rgba(17,17,17,.16)}
-.item-showcase:last-child{border-bottom:0}
-.item-showcase-row{display:grid;grid-template-columns:minmax(220px,.8fr) minmax(320px,1.2fr);gap:clamp(1.25rem,3vw,3.5rem);min-height:230px;padding:1.25rem 0;align-items:stretch}
-.item-showcase .item-button{position:relative;display:flex;min-height:230px;padding:0;justify-content:center}
+.item-showcase{position:relative;padding:0;border:0}
+.item-showcase::after{content:"";position:absolute;z-index:1;right:0;left:0;height:10px;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='10' viewBox='0 0 48 10'%3E%3Cg fill='%23566b7a' fill-opacity='.42'%3E%3Ccircle cx='2' cy='5' r='1'/%3E%3Ccircle cx='8' cy='3' r='1'/%3E%3Ccircle cx='14' cy='2' r='1'/%3E%3Ccircle cx='20' cy='3' r='1'/%3E%3Ccircle cx='26' cy='5' r='1'/%3E%3Ccircle cx='32' cy='7' r='1'/%3E%3Ccircle cx='38' cy='8' r='1'/%3E%3Ccircle cx='44' cy='7' r='1'/%3E%3C/g%3E%3C/svg%3E");background-position:left center;background-repeat:repeat-x}
+.item-showcase::after{bottom:-5px}
+.item-showcase:last-child::after{display:none}
+.item-showcase-row{display:grid;grid-template-columns:minmax(220px,1fr) minmax(300px,400px);gap:clamp(1rem,2.4vw,2.75rem);height:324px;padding:.75rem 0;align-items:center;justify-content:space-between}
+.item-showcase .item-button{position:relative;display:flex;height:100%;min-height:0;padding:1rem 0 3.75rem;justify-content:center}
 .item-showcase-copy{display:flex;min-width:0;flex-direction:column;gap:.45rem;padding-left:clamp(.25rem,1vw,1rem)}
 .item-showcase .item-heading-row{align-items:flex-start}
 .item-showcase .item-title{align-items:center;font-size:1.3rem;line-height:1.2}
-.item-showcase .item-chevron{position:absolute;z-index:2;bottom:.85rem;left:.85rem;width:30px;height:30px;border:1px solid rgba(17,17,17,.2);border-radius:50%;background:rgba(235,243,248,.9);font-size:1rem;box-shadow:0 2px 8px rgba(20,35,55,.12)}
+.item-showcase .item-chevron{position:absolute;z-index:2;bottom:.85rem;left:.85rem;width:32px;height:32px;border:2px solid;border-color:#fff #486a8b #486a8b #fff;border-radius:0;background:linear-gradient(135deg,#eaf5ff 0,#b8d5ee 48%,#8fb4d4 100%);color:#294d6b;font-family:Tahoma,'Segoe UI',sans-serif;font-size:1rem;font-weight:700;box-shadow:1px 1px 0 #274965,-1px -1px 0 #cce3f5}
+.item-showcase .item-button:hover .item-chevron{background:linear-gradient(135deg,#fff 0,#cbe5f8 48%,#9fc5e3 100%)}
+.item-showcase .item-button:active .item-chevron{border-color:#486a8b #fff #fff #486a8b;background:linear-gradient(135deg,#87aac8,#bdd8ed);box-shadow:inset 1px 1px 1px rgba(31,65,92,.35)}
 .item-showcase .project-logo-employer img{width:30px;height:30px;margin:0}
 .item-showcase .project-logo-school img{width:42px;height:42px;margin:0}
 .item-showcase .project-logo-employer-mercor img{width:26px;height:26px;margin:2px}
@@ -1850,7 +2362,7 @@ a,button,[role="button"],summary{cursor:url("${xpPointer}") 7 1,pointer}
 .item-showcase.item-work .item-title,
 .item-showcase.item-school .item-title,
 .item-showcase.item-research .item-title,
-.item-showcase.item-project .item-title{font-size:1.58rem}
+.item-showcase.item-project .item-title{font-size:1.45rem}
 .item-showcase.item-employer .project-logo-employer img{width:42px;height:42px;margin:0}
 .item-showcase.item-employer .project-logo-employer-mercor img{width:36px;height:36px;margin:3px 6px 3px 0}
 .item-showcase.item-employer .project-logo-employer-jujube img{margin-left:-4px;margin-right:4px}
@@ -1861,11 +2373,14 @@ a,button,[role="button"],summary{cursor:url("${xpPointer}") 7 1,pointer}
 .item-showcase .project-title-subtitle{font-size:.68em;line-height:1.25}
 .item-showcase .item-meta{font-size:.84rem;font-weight:700;line-height:1.35;letter-spacing:.055em;text-transform:uppercase;white-space:pre-line}
 .item-showcase .item-location{font-size:.78rem;font-weight:600;line-height:1.3;letter-spacing:.045em;text-transform:uppercase}
-.resume-showcase-visual{position:relative;display:grid;width:100%;height:clamp(230px,27vw,350px);min-width:0;overflow:hidden;place-items:center;background:rgba(255,255,255,.24)}
-.resume-showcase-photo img{display:block;width:100%;height:100%;object-fit:cover}
+.resume-showcase-visual{position:relative;display:grid;width:100%;height:clamp(190px,20vw,270px);min-width:0;overflow:hidden;place-items:center;background:rgba(255,255,255,.24)}
+.resume-showcase-visual.resume-showcase-photo{height:300px;background:transparent}
+.resume-showcase-photo img{display:block;width:100%;height:100%;object-fit:contain}
 .resume-showcase-contain img{object-fit:contain}
 .resume-showcase-embed iframe{display:block;width:100%;height:100%;border:0;background:rgba(255,255,255,.35)}
 .resume-showcase-embed-widescreen{height:auto;aspect-ratio:var(--showcase-aspect-ratio,16 / 9);align-self:center;background:#111}
+.resume-showcase-visual.resume-showcase-desktop-window{height:auto}
+.resume-showcase-desktop-window iframe{position:absolute;top:0;left:0;width:1920px;height:1080px;max-width:none;transform:scale(var(--desktop-preview-scale,1));transform-origin:top left}
 .resume-showcase-logo img{display:block;width:auto;max-width:58%;height:auto;max-height:62%;object-fit:contain}
 .resume-showcase-logo-mercor img{max-width:44%;max-height:70%}
 .resume-showcase-logo-jujube img{max-width:42%;max-height:68%}
@@ -1968,75 +2483,18 @@ a,button,[role="button"],summary{cursor:url("${xpPointer}") 7 1,pointer}
 .media-embed iframe{width:100%;min-height:260px;border:0;display:block}
 .media-caption{margin:0;padding:.5rem 0;font-size:.85rem;color:#555;background:none}
 
-/* Dark theme */
-.theme-dark .container{color:#f2f5fa}
-.theme-dark .sidebar{border-color:rgba(255,255,255,.16)}
-.theme-dark .bio,
-.theme-dark .sidebar-contact a,
-.theme-dark .item-timeframe,
-.theme-dark .item-meta,
-.theme-dark .item-role,
-.theme-dark .item-description,
-.theme-dark .item-highlights,
-.theme-dark .course-group-content p,
-.theme-dark .course-group-content ul,
-.theme-dark .media-caption{color:#c7ced8}
-.theme-dark .item-timeframe,
-.theme-dark .item-location{color:#aeb8c5}
-.theme-dark .item-timeframe{font-weight:700}
-.theme-dark .sidebar-contact a:hover,
-.theme-dark .bio-coordinates:hover,
-.theme-dark .sketch-title:hover,
-.theme-dark .section-toggle:hover,
-.theme-dark .section-toggle:focus,
-.theme-dark .item:hover .item-button,
-.theme-dark .item-button:hover,
-.theme-dark .item.active .item-button{color:#fff}
-.theme-dark .section-toggle,
-.theme-dark .item-button,
-.theme-dark .sketch-title{color:#f2f5fa}
-.theme-dark .item-title{color:#aeb8c5}
-.theme-dark .item:hover .item-title,
-.theme-dark .item.active .item-title{color:#dce3ec}
-.theme-dark .online-status{border-color:rgba(255,255,255,.9)}
-.theme-dark .course-group{border-color:rgba(255,255,255,.18)}
-.theme-dark .stl-gallery{border-color:rgba(255,255,255,.18);background:rgba(8,10,17,.2)}
-.theme-dark .stl-gallery-heading p,
-.theme-dark .stl-gallery-empty span{color:#aeb8c5}
-.theme-dark .stl-upload-button{border-color:rgba(255,255,255,.25);background:rgba(8,10,17,.58);color:#e7ebf1}
-.theme-dark .stl-viewer-shell{background:radial-gradient(circle at 50% 36%,rgba(63,75,90,.88),rgba(19,25,33,.82) 62%,rgba(8,10,17,.9))}
-.theme-dark .stl-viewer-name{background:rgba(23,26,32,.84);color:#e7ebf1}
-.theme-dark .stl-coverflow-card{color:#e7ebf1}
-.theme-dark .stl-coverflow-art{background:linear-gradient(145deg,#536879,#1f2933)}
-.theme-dark .stl-gallery-empty{border-color:rgba(255,255,255,.24);background:radial-gradient(circle at 50% 35%,rgba(58,70,84,.6),rgba(8,10,17,.42));color:#dce4ef}
-.theme-dark .sidebar{border-right-color:rgba(255,255,255,.16);background-color:rgba(23,26,32,.86)}
-.theme-dark .content{scrollbar-color:rgba(190,205,225,.62) rgba(190,205,225,.12)}
-.theme-dark .content::-webkit-scrollbar-track{background:rgba(190,205,225,.12)}
-.theme-dark .content::-webkit-scrollbar-thumb{background:rgba(190,205,225,.62);background-clip:padding-box}
-.theme-dark .resume-scroll-cue{border-color:rgba(255,255,255,.24);background:rgba(24,29,38,.94);box-shadow:0 5px 18px rgba(0,0,0,.35);color:#f2f5fa}
-.theme-dark .resume-scroll-cue.is-visible:hover{background:#252d39}
-.theme-dark .section-jump-button{color:#dce4ef}
-.theme-dark .section-jump-label{background:rgba(23,26,32,.94);box-shadow:0 3px 14px rgba(0,0,0,.35)}
-.theme-dark .item-showcase{border-color:rgba(255,255,255,.18)}
-.theme-dark .item-showcase .item-chevron{border-color:rgba(255,255,255,.22);background:rgba(23,26,32,.9)}
-.theme-dark .resume-showcase-visual{background:rgba(8,10,17,.24)}
-.theme-dark .resume-showcase-placeholder{color:#c7ced8}
-.theme-dark .item-link{border-color:rgba(255,255,255,.28);background:rgba(8,10,17,.58);color:#e7ebf1}
-.theme-dark .item-link:hover{border-color:#fff;color:#fff}
-.theme-dark .media-audio{border-color:rgba(255,255,255,.18);background:rgba(8,10,17,.2)}
-.theme-dark .item-details-placeholder{color:#aab2bf}
-.theme-dark .sketch-frame,
-.theme-dark .sketch-placeholder{background:rgba(255,255,255,.08)}
-.theme-dark .coverflow-card{color:#f2f5fa}
-
 @media (max-width:900px){
   .container{grid-template-columns:1fr;height:auto;min-height:100vh;overflow:visible}
-  .sidebar{height:auto;border-right:none;border-bottom:1px solid #e6e6e6;overflow:visible}
+  .music-footer-coverflow{padding-left:0}
+  .footer-playback-controls{display:none}
+  .sidebar{height:auto;border:0;overflow:visible}
+  .sidebar::after{top:auto;right:0;bottom:-5px;left:0;width:auto;height:10px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='10' viewBox='0 0 8 10'%3E%3Ccircle cx='4' cy='5' r='1' fill='%23566b7a' fill-opacity='.42'/%3E%3C/svg%3E");background-position:left center;background-repeat:repeat-x}
+  .sidebar::before{top:auto;right:auto;bottom:-5px;left:var(--portfolio-scroll-position,0px);width:48px;height:10px;background:radial-gradient(circle at 4px 50%,#566b7a 0 var(--portfolio-dot-size-1,1.2px),transparent calc(var(--portfolio-dot-size-1,1.2px) + .2px)),radial-gradient(circle at 12px 50%,#566b7a 0 var(--portfolio-dot-size-2,1.6px),transparent calc(var(--portfolio-dot-size-2,1.6px) + .2px)),radial-gradient(circle at 20px 50%,#566b7a 0 var(--portfolio-dot-size-3,2.6px),transparent calc(var(--portfolio-dot-size-3,2.6px) + .2px)),radial-gradient(circle at 28px 50%,#566b7a 0 var(--portfolio-dot-size-4,1.6px),transparent calc(var(--portfolio-dot-size-4,1.6px) + .2px)),radial-gradient(circle at 36px 50%,#566b7a 0 var(--portfolio-dot-size-5,1.2px),transparent calc(var(--portfolio-dot-size-5,1.2px) + .2px)),radial-gradient(circle at 44px 50%,#566b7a 0 var(--portfolio-dot-size-6,1px),transparent calc(var(--portfolio-dot-size-6,1px) + .2px))}
   .content-shell{height:auto;overflow:visible}
-  .content{height:auto;overflow:visible}
+  .content{height:auto;padding-right:2rem;overflow:visible}
+  .item-showcase-row{height:auto}
   .resume-scroll-cue,
   .section-jump-nav{display:none}
-  .theme-dark .sidebar{border-bottom-color:rgba(255,255,255,.16)}
   .sketch-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media (max-width:600px){
@@ -2045,6 +2503,7 @@ a,button,[role="button"],summary{cursor:url("${xpPointer}") 7 1,pointer}
   .item-showcase .item-button{min-height:170px}
   .item-showcase-copy{padding:0}
   .resume-showcase-visual{height:210px}
+  .resume-showcase-visual.resume-showcase-photo{height:auto}
   .school-thumbnail{width:44px;height:32px;margin-left:0}
   .music-coverflow,.coverflow-track{min-height:270px;height:270px}
   .coverflow-track{padding-top:34px;padding-bottom:16px}
@@ -2056,6 +2515,7 @@ a,button,[role="button"],summary{cursor:url("${xpPointer}") 7 1,pointer}
 }
 @media (min-width:901px) and (max-height:800px){
   .sidebar{padding:1rem}
+  .content{padding-top:1rem}
   .name{margin-bottom:.5rem;font-size:1.7rem}
   .profile-image{width:min(100%,22vh);margin-bottom:.5rem}
   .bio{font-size:.82rem;line-height:1.35}
@@ -2064,7 +2524,7 @@ a,button,[role="button"],summary{cursor:url("${xpPointer}") 7 1,pointer}
   .sidebar-contact a{font-size:.75rem;line-height:1.25}
 }
 /* Remove dark spots (ensure consistent background) */
-header, footer, html, body, #root { background: transparent !important; box-shadow: none !important; }
+header, html, body, #root { background: transparent !important; box-shadow: none !important; }
 `}</style>
   );
 }

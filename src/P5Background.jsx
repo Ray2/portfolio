@@ -22,16 +22,18 @@ export default function P5Background({ theme }) {
         return;
       }
       const sketch = (p) => {
-        const spacing = 27;
-        const boxSize = 25;
+        const spacing = 30;
+        const boxSize = 28;
         const marginMultiplier = 20;
-        const maxDisturbances = 8;
-        const disturbanceLife = 100;
+        const maxDisturbances = 5;
+        const disturbanceLife = 90;
         const disturbances = [];
         const reducedMotion = window.matchMedia(
           "(prefers-reduced-motion: reduce)"
         ).matches;
         let lastPointerSample = 0;
+        let smoothedPointerX = null;
+        let smoothedPointerY = null;
         let isPointerDown = false;
         let renderer;
 
@@ -39,14 +41,26 @@ export default function P5Background({ theme }) {
           if (!renderer || reducedMotion) return;
 
           const now = performance.now();
-          if (now - lastPointerSample < 78) return;
+          if (now - lastPointerSample < 90) return;
           lastPointerSample = now;
 
           const bounds = renderer.elt.getBoundingClientRect();
           const screenX = event.clientX - bounds.left;
           const screenY = event.clientY - bounds.top;
 
-          disturbances.push({ x: screenX, y: screenY, age: 0 });
+          if (smoothedPointerX === null || smoothedPointerY === null) {
+            smoothedPointerX = screenX;
+            smoothedPointerY = screenY;
+          } else {
+            smoothedPointerX += (screenX - smoothedPointerX) * 0.34;
+            smoothedPointerY += (screenY - smoothedPointerY) * 0.34;
+          }
+
+          disturbances.push({
+            x: smoothedPointerX,
+            y: smoothedPointerY,
+            age: 0,
+          });
           if (disturbances.length > maxDisturbances) {
             disturbances.shift();
           }
@@ -67,7 +81,7 @@ export default function P5Background({ theme }) {
           const width = window.innerWidth || CANVAS_WIDTH;
           const height = window.innerHeight || CANVAS_HEIGHT;
           p.pixelDensity(1);
-          p.frameRate(30);
+          p.frameRate(45);
           renderer = p.createCanvas(width, height, p.WEBGL);
           renderer.parent(containerRef.current);
           p.noStroke();
@@ -84,6 +98,8 @@ export default function P5Background({ theme }) {
           };
           const handlePointerUp = () => {
             isPointerDown = false;
+            smoothedPointerX = null;
+            smoothedPointerY = null;
           };
 
           window.addEventListener("pointerdown", handlePointerDown, {
@@ -177,13 +193,13 @@ export default function P5Background({ theme }) {
                 const distance = Math.hypot(dx, dy) || 1;
                 const progress = disturbance.age / disturbanceLife;
                 const life = Math.pow(1 - progress, 1.35);
-                const waveRadius = 24 + disturbance.age * 1.6;
+                const waveRadius = 24 + disturbance.age * 1.25;
                 const waveDistance = Math.abs(distance - waveRadius);
                 const wave = Math.exp(
-                  -(waveDistance * waveDistance) / (2 * 40 * 40)
+                  -(waveDistance * waveDistance) / (2 * 52 * 52)
                 );
                 const core = Math.exp(
-                  -(distance * distance) / (2 * 76 * 76)
+                  -(distance * distance) / (2 * 92 * 92)
                 );
                 const influence = Math.max(wave, core * 0.72) * life;
 
@@ -191,20 +207,20 @@ export default function P5Background({ theme }) {
 
                 const cellPhase =
                   x * 0.071 + z * 0.053 + disturbance.age * 0.1;
-                const outwardPush = influence * (25 + disturbance.age * 0.2);
+                const outwardPush = influence * (14 + disturbance.age * 0.1);
 
                 displacedX +=
                   (dx / distance) * outwardPush +
-                  Math.sin(cellPhase) * influence * 12;
+                  Math.sin(cellPhase) * influence * 6;
                 displacedZ +=
                   (-dy / distance / Math.abs(sineX)) * outwardPush +
-                  Math.cos(cellPhase * 1.13) * influence * 12;
+                  Math.cos(cellPhase * 1.13) * influence * 6;
                 yOffset -=
-                  influence * 36 +
-                  Math.sin(cellPhase * 1.7) * influence * 18;
+                  influence * 22 +
+                  Math.sin(cellPhase * 1.7) * influence * 9;
                 scatter = Math.max(scatter, influence);
                 rotationScatter +=
-                  Math.sin(cellPhase * 0.83) * influence * 0.55;
+                  Math.sin(cellPhase * 0.83) * influence * 0.28;
               }
 
               p.push();
@@ -212,7 +228,7 @@ export default function P5Background({ theme }) {
               p.rotateX(p.frameCount * 0.01 + rotationScatter);
               p.rotateY(
                 p.frameCount * 0.01 +
-                  scatter * 0.7 +
+                  scatter * 0.38 +
                   rotationScatter * 0.42
               );
               p.rotateZ(rotationScatter * 0.6);
@@ -230,7 +246,7 @@ export default function P5Background({ theme }) {
                   232 + n * 22 + shimmer * 0.2
                 );
               }
-              p.box(boxSize * (1 - scatter * 0.12));
+              p.box(boxSize * (1 - scatter * 0.06));
               p.pop();
             }
           }

@@ -12,6 +12,7 @@ import blubluShowcaseImage from "../blublu-showcase.webp";
 import nyuPsychShowcaseImage from "../nyupsych-showcase.webp";
 import nyuItpSiteShowcaseImage from "../nyuitpsite-showcase.webp";
 import researchPaperPdf from "../research.pdf";
+import { localMusicAlbums } from "./localMusicAlbums.js";
 
 const stlModelUrls = import.meta.glob("../*.stl", {
   eager: true,
@@ -129,6 +130,7 @@ export const portfolioData = {
           showcaseImage: blubluShowcaseImage,
           showcaseImageAlt: "BluBlu gallery exhibition installation",
           role: "Exhibition Assistant",
+          timeframe: "2026 – Present",
           location: "New York, NY",
           description:
             "Supported gallery installations, artwork transportation, and exhibition operations for artists, galleries, and clients.",
@@ -150,7 +152,7 @@ export const portfolioData = {
           showcaseImageAlt: "Mercor AI platform illustration",
           role: "AI Model Trainer (Music)",
           location: "Remote",
-          timeframe: "2026 – Present",
+          timeframe: "2026–2026",
           description:
             "Develop and evaluate expert music and audio tasks used to train and assess large language models.",
           highlights: [
@@ -566,6 +568,7 @@ export const portfolioData = {
             "Multimodal Machine Learning Can Predict Videoconference Fluidity and Enjoyment",
           logoStyle: "nyu",
           showcaseEmbed: researchPaperPdf,
+          showcaseEmbedFit: "page",
           showcaseEmbedTitle:
             "Multimodal Machine Learning Can Predict Videoconference Fluidity and Enjoyment PDF",
           timeframe: "2025",
@@ -605,6 +608,7 @@ export const portfolioData = {
             "https://tmlne.com/tl/26n4ff?timeline=timelines%2Fnzj4EDfzqAgJNVHdbsrCfbgr3Fs2%2Fprojects%2FYJSKxNMDGAhVhNdcnDHf&embed=1",
           showcaseEmbedTitle: "TMLNE live site preview",
           showcaseAspectRatio: "16 / 9",
+          showcaseDesktopViewport: true,
           timeframe: "2026",
           description:
             "Shareable timeline-building application developed with React and Firebase for arranging complex events across multiple synchronized rows.",
@@ -636,6 +640,7 @@ export const portfolioData = {
           showcaseEmbed: "https://et3rna.com",
           showcaseEmbedTitle: "ETERNA live site preview",
           showcaseAspectRatio: "16 / 9",
+          showcaseDesktopViewport: true,
           timeframe: "2025",
           description:
             "Browser-based DJ mixing application developed with React and the Web Audio API for real-time performance and synchronized audio control.",
@@ -667,6 +672,8 @@ export const portfolioData = {
           showcaseEmbed: "https://pixelcam.space",
           showcaseEmbedTitle: "PIXELCAM live site preview",
           showcaseAspectRatio: "16 / 9",
+          showcaseDesktopViewport: true,
+          showcasePermissions: "camera; microphone",
           timeframe: "2024",
           description:
             "Retro-inspired camera and social platform developed with Expo, React Native Web, Firebase, and Cloudflare Workers and R2.",
@@ -697,7 +704,7 @@ export const portfolioData = {
           showcaseEmbed: "https://www.youtube.com/embed/oheIi9kkfik",
           showcaseEmbedTitle: "RC-707 Drum Machine video preview",
           showcaseAspectRatio: "16 / 9",
-          timeframe: "2023–2024",
+          timeframe: "2023",
           description:
             "Compact cartridge-based drum machine with four hot-swappable sound generators and an eight-step, four-track sequencer.",
           highlights: [
@@ -729,7 +736,7 @@ export const portfolioData = {
           showcaseEmbed: "https://www.youtube.com/embed/5REfPB5XNJc",
           showcaseEmbedTitle: "Arduino Powered Player Piano video preview",
           showcaseAspectRatio: "16 / 9",
-          timeframe: "2022–2023",
+          timeframe: "2022",
           description:
             "MIDI-driven player piano prototype bridging hardware, firmware, and bespoke sequencing tools.",
           highlights: [
@@ -1349,6 +1356,7 @@ export const portfolioData = {
             },
           ],
         },
+        ...localMusicAlbums,
       ],
     },
   ],
