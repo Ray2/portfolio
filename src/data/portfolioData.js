@@ -65,10 +65,10 @@ const nyu3dModels = Object.entries(stlModelUrls)
 
 export const portfolioData = {
   name: "Ray Cogliano",
-  bio: "Creative Developer & Producer\nbuilding audio-tech and web experiences, based\u00a0in\u00a0New\u00a0York\u00a0City",
-  coordinates: "40.74344197625022, -73.98818390071976",
+  bio: "Creative Developer & Producer\nbuilding audio-tech and web experiences, based\u00a0in\u00a0Boston",
+  coordinates: "42.35465931974499, -71.06534299587165",
   coordinatesUrl:
-    "https://www.google.com/maps?q=40.74344197625022,-73.98818390071976",
+    "https://www.google.com/maps?q=42.35465931974499,-71.06534299587165",
   sections: [
     {
       title: "Work",

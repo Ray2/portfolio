@@ -25,8 +25,8 @@ export default function P5Background({ theme }) {
         const spacing = 30;
         const boxSize = 28;
         const marginMultiplier = 20;
-        const maxDisturbances = 5;
-        const disturbanceLife = 90;
+        const maxDisturbances = 8;
+        const disturbanceLife = 110;
         const disturbances = [];
         const reducedMotion = window.matchMedia(
           "(prefers-reduced-motion: reduce)"
@@ -41,7 +41,7 @@ export default function P5Background({ theme }) {
           if (!renderer || reducedMotion) return;
 
           const now = performance.now();
-          if (now - lastPointerSample < 90) return;
+          if (now - lastPointerSample < 45) return;
           lastPointerSample = now;
 
           const bounds = renderer.elt.getBoundingClientRect();
@@ -52,8 +52,8 @@ export default function P5Background({ theme }) {
             smoothedPointerX = screenX;
             smoothedPointerY = screenY;
           } else {
-            smoothedPointerX += (screenX - smoothedPointerX) * 0.34;
-            smoothedPointerY += (screenY - smoothedPointerY) * 0.34;
+            smoothedPointerX += (screenX - smoothedPointerX) * 0.2;
+            smoothedPointerY += (screenY - smoothedPointerY) * 0.2;
           }
 
           disturbances.push({
@@ -132,9 +132,8 @@ export default function P5Background({ theme }) {
 
         p.draw = () => {
           if (
-            document.documentElement.classList.contains(
-              "coverflow-scrolling"
-            )
+            document.documentElement.classList.contains("coverflow-scrolling") ||
+            document.documentElement.classList.contains("portfolio-scrolling")
           ) {
             return;
           }
@@ -192,7 +191,11 @@ export default function P5Background({ theme }) {
                 const dy = projectedY - disturbance.y;
                 const distance = Math.hypot(dx, dy) || 1;
                 const progress = disturbance.age / disturbanceLife;
-                const life = Math.pow(1 - progress, 1.35);
+                const attackProgress = Math.min(1, disturbance.age / 6);
+                const attack =
+                  attackProgress * attackProgress * (3 - 2 * attackProgress);
+                const release = Math.pow(1 - progress, 1.55);
+                const life = attack * release;
                 const waveRadius = 24 + disturbance.age * 1.25;
                 const waveDistance = Math.abs(distance - waveRadius);
                 const wave = Math.exp(
@@ -207,20 +210,20 @@ export default function P5Background({ theme }) {
 
                 const cellPhase =
                   x * 0.071 + z * 0.053 + disturbance.age * 0.1;
-                const outwardPush = influence * (14 + disturbance.age * 0.1);
+                const outwardPush = influence * (8 + disturbance.age * 0.055);
 
                 displacedX +=
                   (dx / distance) * outwardPush +
-                  Math.sin(cellPhase) * influence * 6;
+                  Math.sin(cellPhase) * influence * 3.5;
                 displacedZ +=
                   (-dy / distance / Math.abs(sineX)) * outwardPush +
-                  Math.cos(cellPhase * 1.13) * influence * 6;
+                  Math.cos(cellPhase * 1.13) * influence * 3.5;
                 yOffset -=
-                  influence * 22 +
-                  Math.sin(cellPhase * 1.7) * influence * 9;
+                  influence * 13 +
+                  Math.sin(cellPhase * 1.7) * influence * 5;
                 scatter = Math.max(scatter, influence);
                 rotationScatter +=
-                  Math.sin(cellPhase * 0.83) * influence * 0.28;
+                  Math.sin(cellPhase * 0.83) * influence * 0.16;
               }
 
               p.push();

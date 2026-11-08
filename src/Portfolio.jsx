@@ -70,7 +70,13 @@ export default function Portfolio() {
     if (!content) return undefined;
 
     let animationFrame = 0;
+    let scrollEndTimer = 0;
     const updateScrollState = () => {
+      document.documentElement.classList.add("portfolio-scrolling");
+      window.clearTimeout(scrollEndTimer);
+      scrollEndTimer = window.setTimeout(() => {
+        document.documentElement.classList.remove("portfolio-scrolling");
+      }, 120);
       window.cancelAnimationFrame(animationFrame);
       animationFrame = window.requestAnimationFrame(() => {
         const isMobile = window.matchMedia("(max-width: 900px)").matches;
@@ -99,21 +105,12 @@ export default function Portfolio() {
         );
         const stepProgress =
           (rawIndicatorPosition - indicatorStep) / dividerDotSpacing;
-        document.documentElement.style.setProperty(
-          "--portfolio-scroll-position",
-          `${indicatorStep}px`
-        );
         const dotSizesAtCurrentStep = [1.2, 1.6, 2.6, 1.6, 1.2, 1];
         const dotSizesAtNextStep = [1, 1.2, 1.6, 2.6, 1.6, 1.2];
-        dotSizesAtCurrentStep.forEach((size, index) => {
-          const interpolatedSize =
-            size +
-            (dotSizesAtNextStep[index] - size) * stepProgress;
-          document.documentElement.style.setProperty(
-            `--portfolio-dot-size-${index + 1}`,
-            `${interpolatedSize}px`
-          );
-        });
+        const interpolatedDotSizes = dotSizesAtCurrentStep.map(
+          (size, index) =>
+            size + (dotSizesAtNextStep[index] - size) * stepProgress
+        );
 
         const hasMoreBelow =
           content.scrollTop + content.clientHeight < content.scrollHeight - 4;
@@ -133,6 +130,16 @@ export default function Portfolio() {
           currentSection = data.sections.at(-1)?.title || currentSection;
         }
 
+        document.documentElement.style.setProperty(
+          "--portfolio-scroll-position",
+          `${indicatorStep}px`
+        );
+        interpolatedDotSizes.forEach((size, index) => {
+          document.documentElement.style.setProperty(
+            `--portfolio-dot-size-${index + 1}`,
+            `${size}px`
+          );
+        });
         setActiveNavSection(currentSection);
       });
     };
@@ -149,6 +156,8 @@ export default function Portfolio() {
 
     return () => {
       window.cancelAnimationFrame(animationFrame);
+      window.clearTimeout(scrollEndTimer);
+      document.documentElement.classList.remove("portfolio-scrolling");
       document.documentElement.style.removeProperty("--portfolio-scroll-position");
       for (let index = 1; index <= 6; index += 1) {
         document.documentElement.style.removeProperty(
@@ -195,6 +204,11 @@ export default function Portfolio() {
   };
 
   const handleFooterMusicSelect = (itemId) => {
+    setActiveItemId(itemId);
+    setFooterAlbumId(itemId);
+  };
+
+  const handleMusicCoverSelect = (itemId) => {
     setActiveItemId(itemId);
     setFooterAlbumId(itemId);
   };
@@ -301,7 +315,7 @@ export default function Portfolio() {
                   items={section.items}
                   isSectionOpen={isSectionOpen}
                   activeItemId={activeItemId}
-                  onSelect={handleSelect}
+                  onSelect={handleMusicCoverSelect}
                 />
               ) : (
                 <ul className="list" aria-hidden={!isSectionOpen}>
@@ -604,6 +618,8 @@ function AlbumTrackBrowser({ album, context = "footer" }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [volume, setVolume] = useState(1);
+  const [repeatMode, setRepeatMode] = useState("off");
+  const [shuffleEnabled, setShuffleEnabled] = useState(false);
   const [scrollbar, setScrollbar] = useState({
     visible: false,
     thumbHeight: 0,
@@ -735,9 +751,41 @@ function AlbumTrackBrowser({ album, context = "footer" }) {
     else audio.pause();
   };
 
-  const playNextTrack = () => {
+  const handleTrackEnd = () => {
     if (selectedTrackIndex === null || tracks.length === 0) return;
-    playTrack((selectedTrackIndex + 1) % tracks.length);
+    if (repeatMode === "one") {
+      const audio = audioRef.current;
+      if (!audio) return;
+      audio.currentTime = 0;
+      audio.play().catch(() => undefined);
+      return;
+    }
+    if (shuffleEnabled && tracks.length > 1) {
+      const offset = 1 + Math.floor(Math.random() * (tracks.length - 1));
+      playTrack((selectedTrackIndex + offset) % tracks.length);
+      return;
+    }
+    if (selectedTrackIndex < tracks.length - 1) {
+      playTrack(selectedTrackIndex + 1);
+    } else if (repeatMode === "all") {
+      playTrack(0);
+    }
+  };
+
+  const skipTrack = (direction) => {
+    if (tracks.length === 0) return;
+    if (selectedTrackIndex === null) {
+      playTrack(direction < 0 ? tracks.length - 1 : 0);
+      return;
+    }
+    if (direction > 0 && shuffleEnabled && tracks.length > 1) {
+      const offset = 1 + Math.floor(Math.random() * (tracks.length - 1));
+      playTrack((selectedTrackIndex + offset) % tracks.length);
+      return;
+    }
+    playTrack(
+      (selectedTrackIndex + direction + tracks.length) % tracks.length
+    );
   };
 
   return (
@@ -745,11 +793,6 @@ function AlbumTrackBrowser({ album, context = "footer" }) {
       className={`album-track-browser ${context}-track-browser`}
       aria-label="Album tracks"
     >
-      <header className="track-browser-titlebar">
-        <span className="track-browser-folder" aria-hidden="true" />
-        <strong>{album?.title || "Select an album"}</strong>
-        <span>{tracks.length ? `${tracks.length} tracks` : "No local tracks"}</span>
-      </header>
       <div className="track-browser-columns" aria-hidden="true">
         <span>#</span>
         <span>Name</span>
@@ -847,13 +890,68 @@ function AlbumTrackBrowser({ album, context = "footer" }) {
             }}
           />
         </label>
+        <div className="playback-mode-controls" aria-label="Playback modes">
+          <button
+            type="button"
+            aria-label="Previous track"
+            title="Previous track"
+            onClick={() => skipTrack(-1)}
+          >
+            |◀
+          </button>
+          <button
+            type="button"
+            aria-label="Next track"
+            title="Next track"
+            onClick={() => skipTrack(1)}
+          >
+            ▶|
+          </button>
+          <button
+            type="button"
+            className={repeatMode !== "off" ? "is-active repeat-button" : "repeat-button"}
+            aria-pressed={repeatMode !== "off"}
+            aria-label={
+              repeatMode === "off"
+                ? "Repeat off"
+                : repeatMode === "all"
+                ? "Repeat album"
+                : "Repeat current track"
+            }
+            title={
+              repeatMode === "off"
+                ? "Repeat off"
+                : repeatMode === "all"
+                ? "Repeat album"
+                : "Repeat current track"
+            }
+            onClick={() =>
+              setRepeatMode((current) =>
+                current === "off" ? "all" : current === "all" ? "one" : "off"
+              )
+            }
+          >
+            <RepeatIcon />
+            {repeatMode === "one" && <sup aria-hidden="true">1</sup>}
+          </button>
+          <button
+            type="button"
+            className={shuffleEnabled ? "is-active" : ""}
+            aria-pressed={shuffleEnabled}
+            aria-label="Shuffle tracks"
+            title="Shuffle tracks"
+            onClick={() => setShuffleEnabled((current) => !current)}
+          >
+            <ShuffleIcon />
+          </button>
+        </div>
       </div>
       <audio
         ref={audioRef}
         className="track-browser-player"
         controls
         preload="metadata"
-        onEnded={playNextTrack}
+        onEnded={handleTrackEnd}
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
         onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
@@ -881,6 +979,22 @@ function formatTrackDuration(duration) {
   return `${minutes}:${seconds}`;
 }
 
+function ShuffleIcon() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true">
+      <path d="M2 5h3c4 0 4 10 9 10h3M14 12l3 3-3 3M2 15h3c4 0 4-10 9-10h3M14 2l3 3-3 3" />
+    </svg>
+  );
+}
+
+function RepeatIcon() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true">
+      <path d="M4 8V7c0-1.7 1.3-3 3-3h8M12 1l3 3-3 3M16 12v1c0 1.7-1.3 3-3 3H5M8 13l-3 3 3 3" />
+    </svg>
+  );
+}
+
 function MusicCoverFlow({
   items,
   isSectionOpen,
@@ -890,7 +1004,7 @@ function MusicCoverFlow({
   compact = false,
   showDetails: renderDetails = true,
 }) {
-  const loopGroupCount = 21;
+  const loopGroupCount = 7;
   const middleLoopGroup = Math.floor(loopGroupCount / 2);
   const displayItems = useMemo(() => {
     const featuredIndex = items.findIndex((item) => item.coverFlowStart);
@@ -1011,11 +1125,25 @@ function MusicCoverFlow({
     track.scrollTo({ left: targetLeft, behavior });
   };
 
+  const rebaseLoopIndex = (index) => {
+    if (displayItems.length < 2) return index;
+    const safeStart = displayItems.length * 2;
+    const safeEnd = displayItems.length * (loopGroupCount - 2);
+    if (index >= safeStart && index < safeEnd) return index;
+    const logicalIndex =
+      ((index % displayItems.length) + displayItems.length) %
+      displayItems.length;
+    return displayItems.length * middleLoopGroup + logicalIndex;
+  };
+
   const chooseCover = (index) => {
-    selectedIndexRef.current = index;
-    setSelectedIndex(index);
-    centerCover(index);
-    onSelect(loopedItems[index].item.id);
+    const rebasedIndex = rebaseLoopIndex(index);
+    const selectedLoopItem = loopedItems[rebasedIndex];
+    if (!selectedLoopItem) return;
+    selectedIndexRef.current = rebasedIndex;
+    setSelectedIndex(rebasedIndex);
+    centerCover(rebasedIndex);
+    onSelect(selectedLoopItem.item.id);
   };
 
   const navigateFromCover = (event, index) => {
@@ -1025,8 +1153,27 @@ function MusicCoverFlow({
   };
 
   const stepCover = (direction) => {
-    const nextIndex = selectedIndexRef.current + direction;
-    chooseCover(nextIndex);
+    let currentIndex = selectedIndexRef.current;
+    if (displayItems.length > 1) {
+      const nearLeftBoundary = currentIndex < displayItems.length * 2;
+      const nearRightBoundary =
+        currentIndex >= displayItems.length * (loopGroupCount - 2);
+      if (
+        (direction < 0 && nearLeftBoundary) ||
+        (direction > 0 && nearRightBoundary)
+      ) {
+        const logicalIndex =
+          ((currentIndex % displayItems.length) + displayItems.length) %
+          displayItems.length;
+        currentIndex =
+          displayItems.length * middleLoopGroup + logicalIndex;
+        selectedIndexRef.current = currentIndex;
+        setSelectedIndex(currentIndex);
+        centerCover(currentIndex, "auto");
+      }
+    }
+
+    window.requestAnimationFrame(() => chooseCover(currentIndex + direction));
   };
 
   const handleTrackScroll = () => {
@@ -1036,6 +1183,10 @@ function MusicCoverFlow({
     scrollEndTimerRef.current = window.setTimeout(() => {
       document.documentElement.classList.remove("coverflow-scrolling");
       setSelectedIndex(selectedIndexRef.current);
+      const centeredItem = loopedItems[selectedIndexRef.current]?.item;
+      if (centeredItem && centeredItem.id !== activeItemId) {
+        onSelect(centeredItem.id);
+      }
     }, 110);
 
     if (layoutFrameRef.current) return;
@@ -1044,7 +1195,11 @@ function MusicCoverFlow({
       layoutFrameRef.current = 0;
       const closestIndex = updateCoverFlowLayout(trackRef.current);
       if (closestIndex >= 0) {
-        selectedIndexRef.current = closestIndex;
+        const rebasedIndex = rebaseLoopIndex(closestIndex);
+        selectedIndexRef.current = rebasedIndex;
+        if (rebasedIndex !== closestIndex) {
+          centerCover(rebasedIndex, "auto");
+        }
       }
     });
   };
@@ -1075,6 +1230,7 @@ function MusicCoverFlow({
           onScroll={handleTrackScroll}
         >
           {loopedItems.map(({ item, loopKey }, index) => {
+            const coverDistance = Math.abs(index - selectedIndex);
             const position =
               index === selectedIndex
                 ? "is-selected"
@@ -1088,6 +1244,7 @@ function MusicCoverFlow({
                 className={`coverflow-card ${position}`}
                 data-cover-index={index}
                 key={loopKey}
+                style={{ zIndex: index === selectedIndex ? 20 : Math.max(1, 12 - coverDistance) }}
                 aria-pressed={index === selectedIndex}
                 tabIndex={isSectionOpen ? 0 : -1}
                 onClick={() => chooseCover(index)}
@@ -2222,17 +2379,18 @@ a,button,[role="button"],summary{cursor:url("${xpPointer}") 7 1,pointer}
 .sidebar-contact a{display:inline-flex;align-items:center;gap:.45rem;color:#333;font-size:.9rem;text-decoration:none}
 .contact-icon{width:17px;height:17px;flex:0 0 auto}
 .sidebar-contact a:hover{color:#777;text-decoration:underline}
-.music-footer{position:fixed;z-index:30;right:0;bottom:0;left:0;display:grid;width:100%;height:176px;box-sizing:border-box;grid-template-columns:minmax(300px,38%) minmax(0,1fr);grid-template-rows:minmax(0,1fr);padding-bottom:env(safe-area-inset-bottom);overflow:hidden;border-top:1px solid rgba(70,105,130,.18);background:rgba(233,245,255,.62);backdrop-filter:blur(14px)}
+.music-footer{position:fixed;z-index:30;right:0;bottom:0;left:0;display:grid;width:100%;height:150px;box-sizing:border-box;grid-template-columns:minmax(300px,38%) minmax(0,1fr);grid-template-rows:minmax(0,1fr);padding-bottom:env(safe-area-inset-bottom);overflow:hidden;border-top:1px solid rgba(70,105,130,.18);background:rgba(233,245,255,.8)}
 .music-footer-coverflow{min-width:0;min-height:0;overflow:hidden;padding-left:200px;border-right:1px dotted rgba(70,105,130,.4)}
 .music-footer>.footer-track-browser{min-height:0;max-height:100%;overflow:hidden}
-.music-footer .music-flow-shell.is-compact.is-open{height:176px;max-height:176px}
+.music-footer .music-flow-shell.is-compact.is-open{height:150px;max-height:150px}
 .music-footer .music-flow-shell.is-compact .music-coverflow,
-.music-footer .music-flow-shell.is-compact .coverflow-track{height:176px;min-height:176px}
-.music-footer .music-flow-shell.is-compact .coverflow-track{padding:25px calc(50% - 41px)}
+.music-footer .music-flow-shell.is-compact .coverflow-track{height:150px;min-height:150px}
+.music-footer .music-flow-shell.is-compact .music-coverflow{--coverflow-clip:max(12px,calc(50% - 210px))}
+.music-footer .music-flow-shell.is-compact .coverflow-track{padding:12px calc(50% - 41px)}
 .music-footer .music-flow-shell.is-compact .coverflow-card{flex-basis:82px}
 .music-footer .music-flow-shell.is-compact .coverflow-arrow-left{left:max(12px,calc(50% - 210px))}
 .music-footer .music-flow-shell.is-compact .coverflow-arrow-right{right:max(12px,calc(50% - 210px))}
-.album-track-browser{display:grid;min-width:0;height:100%;box-sizing:border-box;grid-template-rows:auto auto minmax(0,1fr);padding:.45rem .55rem .5rem;background:rgba(220,238,252,.34);color:#20384d;font:12px/1.2 Tahoma,'Segoe UI',sans-serif}
+.album-track-browser{display:grid;min-width:0;height:100%;box-sizing:border-box;grid-template-rows:auto minmax(0,1fr);padding:.45rem .55rem .5rem;background:rgba(220,238,252,.34);color:#20384d;font:12px/1.2 Tahoma,'Segoe UI',sans-serif}
 .track-browser-titlebar{display:grid;grid-template-columns:18px minmax(0,1fr) auto;align-items:center;gap:.4rem;min-height:29px;padding:.25rem .45rem;border:1px solid;border-color:#fff #6687a5 #6687a5 #fff;background:linear-gradient(90deg,#5f91d4,#87b9ea);color:#fff;text-shadow:1px 1px #335b8a}
 .track-browser-titlebar strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.76rem}
 .track-browser-titlebar>span:last-child{font-size:.65rem;white-space:nowrap}
@@ -2257,7 +2415,7 @@ a,button,[role="button"],summary{cursor:url("${xpPointer}") 7 1,pointer}
 .track-browser-row:focus-visible{position:relative;z-index:1;outline:2px solid #1f4e8c;outline-offset:-2px}
 .track-browser-empty{margin:0;padding:1rem;color:#60788d;text-align:center}
 .track-browser-player{display:none}
-.section-track-browser{position:relative;height:clamp(270px,42vh,390px);margin:.35rem 0 .8rem;padding:.6rem;background:rgba(220,238,252,.54);border:2px solid;border-color:#fff #6687a5 #6687a5 #fff;box-shadow:1px 1px 0 rgba(39,73,101,.7)}
+.section-track-browser{position:relative;height:clamp(270px,42vh,390px);grid-template-rows:auto minmax(0,1fr) auto;margin:.35rem 0 .8rem;padding:.6rem;background:rgba(220,238,252,.54);border:2px solid;border-color:#fff #6687a5 #6687a5 #fff;box-shadow:1px 1px 0 rgba(39,73,101,.7)}
 .section-track-browser .footer-playback-controls{position:static;width:100%;grid-template-columns:42px minmax(120px,1fr) minmax(110px,.45fr);align-items:center;transform:none;margin-top:.45rem;box-sizing:border-box}
 .section-track-browser .footer-play-button{grid-row:auto}
 .footer-playback-controls{position:absolute;z-index:40;top:50%;left:10px;display:grid;width:178px;grid-template-columns:42px minmax(0,1fr);gap:.45rem;padding:.55rem;border:2px solid;border-color:#fff #486a8b #486a8b #fff;background:linear-gradient(135deg,rgba(235,247,255,.96),rgba(166,203,233,.94));box-shadow:1px 1px 0 #274965;transform:translateY(-50%);font:10px/1.15 Tahoma,'Segoe UI',sans-serif;color:#294d6b}
@@ -2265,10 +2423,24 @@ a,button,[role="button"],summary{cursor:url("${xpPointer}") 7 1,pointer}
 .footer-play-button:active{border-color:#486a8b #fff #fff #486a8b;background:#9dbed8}
 .footer-play-button:focus-visible{outline:2px solid #1f4e8c;outline-offset:2px}
 .footer-seek-control{display:grid;min-width:0;gap:.16rem}
-.footer-seek-control input,.footer-volume-control input{width:100%;height:12px;margin:0;accent-color:#316ac5}
+.footer-seek-control input,.footer-volume-control input{width:100%;height:18px;margin:0;padding:0;appearance:none;-webkit-appearance:none;background:transparent;cursor:pointer}
+.footer-seek-control input::-webkit-slider-runnable-track,.footer-volume-control input::-webkit-slider-runnable-track{height:5px;border:2px solid;border-color:#404040 #fff #fff #404040;border-radius:0;background:#808080;box-shadow:none}
+.footer-seek-control input::-webkit-slider-thumb,.footer-volume-control input::-webkit-slider-thumb{width:11px;height:18px;margin-top:-8px;appearance:none;-webkit-appearance:none;border:2px solid;border-color:#fff #404040 #404040 #fff;border-radius:0;background:#c0c0c0;box-shadow:inset 1px 1px #dfdfdf}
+.footer-seek-control input::-moz-range-track,.footer-volume-control input::-moz-range-track{height:3px;border:2px solid;border-color:#404040 #fff #fff #404040;border-radius:0;background:#808080}
+.footer-seek-control input::-moz-range-thumb,.footer-volume-control input::-moz-range-thumb{width:9px;height:16px;border:2px solid;border-color:#fff #404040 #404040 #fff;border-radius:0;background:#c0c0c0;box-shadow:inset 1px 1px #dfdfdf}
+.footer-seek-control input:focus-visible,.footer-volume-control input:focus-visible{outline:1px dotted #000;outline-offset:2px}
 .footer-seek-control span{font-variant-numeric:tabular-nums;white-space:nowrap}
 .footer-volume-control{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:.3rem}
 .footer-volume-control span{font-size:8px;font-weight:700}
+.playback-mode-controls{display:grid;grid-column:1 / -1;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px}
+.playback-mode-controls button{min-width:0;height:20px;padding:0 3px;border:2px solid;border-color:#fff #404040 #404040 #fff;border-radius:0;background:#c0c0c0;color:#111;font:700 8px/1 Tahoma,'Segoe UI',sans-serif;text-align:center;cursor:pointer}
+.playback-mode-controls button:active,.playback-mode-controls button.is-active{border-color:#404040 #fff #fff #404040;background:#a8a8a8;box-shadow:inset 1px 1px #808080}
+.playback-mode-controls button.is-active{color:#000080}
+.playback-mode-controls .repeat-button{position:relative}
+.playback-mode-controls .repeat-button sup{position:absolute;top:2px;right:3px;font-size:7px;line-height:1}
+.playback-mode-controls .repeat-button svg{width:16px;height:16px;stroke-linecap:round;stroke-linejoin:round}
+.playback-mode-controls button svg{display:block;width:13px;height:13px;margin:auto;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:square;stroke-linejoin:miter}
+.playback-mode-controls button:focus-visible{outline:1px dotted #000;outline-offset:-4px}
 .section{margin-bottom:.1rem}
 .section.section-open{margin-bottom:.65rem}
 .section-music{margin-top:1.25rem;border:0}
@@ -2300,8 +2472,8 @@ a,button,[role="button"],summary{cursor:url("${xpPointer}") 7 1,pointer}
 .music-flow-shell.is-compact.is-open{max-height:170px;margin:0}
 .music-flow-shell.is-compact .music-coverflow,
 .music-flow-shell.is-compact .coverflow-track{height:160px;min-height:160px}
-.music-flow-shell.is-compact .coverflow-track{gap:.2rem;padding:4px calc(50% - 47px)}
-.music-flow-shell.is-compact .coverflow-card{flex-basis:94px;gap:.25rem;font-size:.56rem}
+.music-flow-shell.is-compact .coverflow-track{gap:0;padding:4px calc(50% - 47px)}
+.music-flow-shell.is-compact .coverflow-card{flex-basis:94px;margin-inline:-9px;gap:.25rem;font-size:.56rem}
 .music-flow-shell.is-compact .coverflow-generated-cover{padding:10%}
 .music-flow-shell.is-compact .coverflow-generated-artist{font-size:.48rem}
 .music-flow-shell.is-compact .coverflow-generated-title{font-size:.78rem}
@@ -2309,13 +2481,13 @@ a,button,[role="button"],summary{cursor:url("${xpPointer}") 7 1,pointer}
 .music-flow-shell.is-compact .coverflow-arrow-left{left:2px}
 .music-flow-shell.is-compact .coverflow-arrow-right{right:2px}
 .music-flow-shell.is-compact .coverflow-chevron{width:9px;height:15px}
-.music-coverflow{position:relative;isolation:isolate;overflow:hidden;min-height:310px;background:transparent}
-.coverflow-track{display:flex;align-items:center;gap:clamp(.4rem,2vw,1.2rem);height:310px;padding:30px calc(50% - clamp(72px,13.5vw,105px)) 20px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scroll-behavior:smooth;overscroll-behavior-x:contain;perspective:900px;scrollbar-width:none}
+.music-coverflow{--coverflow-clip:58px;position:relative;isolation:isolate;overflow:hidden;min-height:310px;background:transparent}
+.coverflow-track{display:flex;align-items:center;gap:0;height:310px;padding:30px calc(50% - clamp(72px,13.5vw,105px)) 20px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scroll-behavior:smooth;overscroll-behavior-x:contain;clip-path:inset(0 var(--coverflow-clip));perspective:900px;scrollbar-width:none}
 .coverflow-track::-webkit-scrollbar{display:none}
-.coverflow-card{position:relative;z-index:1;display:flex;flex:0 0 clamp(145px,27vw,210px);min-width:0;flex-direction:column;align-items:center;gap:.7rem;padding:0;border:0;background:transparent;color:#111;font:600 .72rem/1.25 'Syne',sans-serif;cursor:pointer;scroll-snap-align:center;transform-style:preserve-3d;will-change:transform,opacity;transition:opacity .08s linear}
-.coverflow-card.is-left{transform:translateX(12%) rotateY(48deg) scale(.78);transform-origin:right center;opacity:.72}
-.coverflow-card.is-right{transform:translateX(-12%) rotateY(-48deg) scale(.78);transform-origin:left center;opacity:.72}
-.coverflow-card.is-selected{z-index:2;transform:translateY(-4px) scale(1);opacity:1}
+.coverflow-card{position:relative;z-index:1;display:flex;flex:0 0 clamp(145px,27vw,210px);min-width:0;margin-inline:-18px;flex-direction:column;align-items:center;gap:.7rem;padding:0;border:0;background:transparent;color:#111;font:600 .72rem/1.25 'Syne',sans-serif;cursor:pointer;scroll-snap-align:center;transform-style:preserve-3d;transition:opacity .08s linear}
+.coverflow-card.is-left{transform:translateX(28%) rotateY(52deg) scale(.8);transform-origin:right center;opacity:.76}
+.coverflow-card.is-right{transform:translateX(-28%) rotateY(-52deg) scale(.8);transform-origin:left center;opacity:.76}
+.coverflow-card.is-selected{z-index:2;margin-inline:0;transform:translateY(-4px) scale(1);opacity:1}
 .coverflow-card:focus-visible{outline:2px solid #fff;outline-offset:4px;border-radius:3px}
 .coverflow-art{position:relative;display:block;width:100%;aspect-ratio:1;overflow:hidden;background:#20242a;box-shadow:0 12px 22px rgba(0,0,0,.58),0 2px 0 rgba(255,255,255,.3);transition:box-shadow .35s ease}
 .coverflow-art::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,rgba(255,255,255,.2),transparent 24%,transparent 70%,rgba(255,255,255,.06));pointer-events:none}
